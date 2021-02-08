@@ -1,0 +1,31 @@
+CURRENT TASKS:
+----------------------------
++ think over about design;
++ write a prototype of Makefile;
++ write a main-function's prototype;
++ fill a TOOLSET field
+
+- write a prototype of scheduler module;
+- write a database module;
+- write an input/output interface;
+- write a file input/output inteface;
+- add a scheduler module (aside sort());
+- write a test environment;
+
+- testing and debugging;
+	- define a maximal number of entries;
+	- think over about test's order;
+	- append sort() to the scheduler module;
+
+- done;
+----------------------------
+
+TOOLSET:
+----------------------------
+gcc (GCC) 10.2.0;
+GNU Make 4.3;
+VIM - Vi IMproved 8.2 
+	(2019 Dec 12, compiled Jan 14 2021 18:17:04);
+GNU gdb (GDB) 10.1;
+git version 2.30.0;
+------------------------------
