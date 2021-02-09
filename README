@@ -3,9 +3,12 @@ CURRENT TASKS:
 + think over about design;
 + write a prototype of Makefile;
 + write a main-function's prototype;
-+ fill a TOOLSET field
++ fill a TOOLSET field;
++ plane a git's commits;
 
-- write a prototype of scheduler module;
++ write a prototype of scheduler module;
+	+ read about branch predictor;
+	+ read about functional pointers;
 - write a database module;
 - write an input/output interface;
 - write a file input/output inteface;

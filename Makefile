@@ -1,7 +1,7 @@
 prog_name = prog
 COMP_MODE = release
 COMP_OPT = -O0
-objects = main.o scheduler.o
+objects = main.o scheduler.o database.o
 cflags = -Wall -Wextra
 
 
@@ -21,6 +21,7 @@ $(prog_name): $(objects)
 	gcc $(cflags) $(objects) -o $(prog_name)
 main.o: defs.h
 scheduler.o: scheduler.h
+database.o: database.h
 
 PHONY: clean
 
