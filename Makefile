@@ -1,7 +1,7 @@
-prog_name = prog
+prog_name = patchee
 COMP_MODE = release
 COMP_OPT = -O0
-objects = main.o scheduler.o database.o
+objects = main.o scheduler.o database.o sort.o
 cflags = -Wall -Wextra
 
 
@@ -18,12 +18,18 @@ endif
 
 
 $(prog_name): $(objects)
-	gcc $(cflags) $(objects) -o $(prog_name)
-main.o: defs.h
-scheduler.o: scheduler.h
-database.o: database.h
+	gcc  $(objects) -o $(prog_name)
+main.o: main.c scheduler.c scheduler.h
+	gcc -c $(cflags) main.c -o main.o
+scheduler.o: scheduler.c scheduler.h database.c database.h sort.c sort.h
+	gcc -c $(cflags) scheduler.c -o scheduler.o
+database.o: database.c
+	gcc -c $(cflags) database.c -o database.o
+sort.o: database.c database.h sort.c sort.h
+	gcc -c $(cflags) sort.c -o sort.o
 
 PHONY: clean
 
 clean:
 	rm -f $(objects)
+	rm -f *.log

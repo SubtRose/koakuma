@@ -24,7 +24,7 @@ int scheduler(void)	{
 		/*verification a key*/
 		/********************/
 		
-		res = procs[key];
+		res = procs[key]();
 		/*analys res*/
 		/************/
 	}

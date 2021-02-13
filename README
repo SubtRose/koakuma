@@ -10,8 +10,14 @@ CURRENT TASKS:
 	+ read about branch predictor;
 	+ read about functional pointers;
 - write a database module;
+	- read about getting a parent_of();
+- write a sort module;
+	+ bubbleSort();
+	- shellSort();
+	- quickSort();
 - write an input/output interface;
 - write a file input/output inteface;
+- make an error handling;
 - add a scheduler module (aside sort());
 - write a test environment;
 
@@ -31,4 +37,11 @@ VIM - Vi IMproved 8.2
 	(2019 Dec 12, compiled Jan 14 2021 18:17:04);
 GNU gdb (GDB) 10.1;
 git version 2.30.0;
-------------------------------
+----------------------------
+
+VIM
+----------------------------
+ctrl+w:
+	v	-	verically split screen;
+	l	-	left to right;
+	h	-	right to left;
