@@ -110,6 +110,9 @@ int toomanyMem(database* db)	{
 			> 
 			(long)getpagesize());
 }
+int isemptyDB(database* db)	{
+	return (int)(!(db->headEntry && db->occupiedMem));
+}
 
 int pageRealloc(database* db, int growDir)	{
 	entry* ptr = db->headEntry;

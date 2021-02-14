@@ -9,17 +9,20 @@ CURRENT TASKS:
 + write a prototype of scheduler module;
 	+ read about branch predictor;
 	+ read about functional pointers;
-- write a database module;
-	- read about getting a parent_of();
-- write a sort module;
++ write a database module;
+	+ read about getting a parent_of();
++ write a sort module;
 	+ bubbleSort();
-	- shellSort();
-	- quickSort();
+	+ shellSort();
+	+ quickSort();
+	+ compile it;
 - write an input/output interface;
 - write a file input/output inteface;
 - make an error handling;
 - add a scheduler module (aside sort());
 - write a test environment;
+- write a Makefile;
+	- read about a recipes;
 
 - testing and debugging;
 	- define a maximal number of entries;

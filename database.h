@@ -39,6 +39,7 @@ int		checkID(database*, unsigned long);
 /*enoughMem() return 1, if memory is enough for new entry;*/
 int		enoughMem(database*);
 int		toomanyMem(database*);
+int		isemptyDB(database*);
 /*variable growDir is one in case, if have be need to allocating memory,*/
 /*and negative, if have be need to deallocating;*/
 int		pageRealloc(database*, int);
