@@ -1,7 +1,7 @@
 prog_name = patchee
 COMP_MODE = release
 COMP_OPT = -O0
-objects = database.o sort.o
+objects = database.o sort.o io.o
 cflags = -Wall -Wextra
 
 
@@ -23,6 +23,8 @@ sort.o: sort.c sort.h database.c database.h
 	(gcc -c $(cflags) 2>&1 sort.c -o sort.o) > clogs/sort.clog
 database.o: database.c database.h
 	(gcc -c $(cflags) 2>&1 database.c -o database.o) > clogs/database.clog
+io.o: io.c io.h
+	(gcc -c $(cflags) 2>&1 io.c -o io.o) > clogs/io.clog
 
 PHONY: clean
 
