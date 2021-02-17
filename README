@@ -20,10 +20,11 @@ CURRENT TASKS:
 	+ read about output's format;
 	+ read about va_list from <stdarg.h>;
 	- read about VAL(varues array's length);
-- write a file input/output inteface;
+	- need to partially rewrite;
++ write a file input/output inteface;
 - make an error handling;
 	- fgets() and scanf();
-- add a scheduler module (aside sort());
+- append a scheduler module (aside sort());
 - write a test environment;
 - write a Makefile;
 	- read about a recipes;
