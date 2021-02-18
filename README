@@ -22,9 +22,28 @@ CURRENT TASKS:
 	- read about VAL(varues array's length);
 	- need to partially rewrite;
 + write a file input/output inteface;
-- make an error handling;
-	- fgets() and scanf();
++ make an error handling;
+	+ define a grace place in code;i
+	+ define a reactions on each type of error;
+		* allocation memory;
+		* open/write/read/ files;
+		* input/output's error;
+		common case's reaction:
+			1. save a current database(s) into autosave file;
+			2. close all file decriptors;
+			3. call an exit() or abort();
+	+ define error's output:	char* strerr(int);
 - append a scheduler module (aside sort());
+	+ init/uninit functions;
+	- new_entry();
+	- edit_data();
+	- find_entry();
+	- delete_data();
+	- save_to_file();
+	- load_from_file();
+	- show_all();
+	- sort_data();
+	- quit();
 - write a test environment;
 - write a Makefile;
 	- read about a recipes;

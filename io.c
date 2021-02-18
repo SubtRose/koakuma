@@ -25,18 +25,15 @@
 #define DIA6		"Post:"
 #define DIA7		"Hr.pay:"
 #define DIA8		"Hours:"
-#define DIA_SIZE	0x08
 
 static int verify_chkey(int);
 static int atold(unsigned long*, char*);
 
-
-void errorMessage(char* msg, ...)	{
+void printerr(const char* msg, ...)	{
 	va_list args;
 	va_start(args, msg);
-	vfprintf(stderr, msg, args);
+	fprintf(stderr, msg, args);
 	va_end(args);
-	return;
 }
 
 /*Return negative number, if no function is succesfully completed.*/
@@ -90,7 +87,7 @@ char* initSelectMenu(void)	{
 }
 
 char** initDialogSet(void)	{
-	char **res = malloc(sizeof(char*) * DIA_SIZE);
+	char **res = malloc(sizeof(char*) * DIALOGS_SIZE);
 	if(res)	{
 		res[0]=DIA1;
 		res[1]=DIA2;
