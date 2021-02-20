@@ -54,11 +54,11 @@ char* getnstr(char* buf, size_t word_size)	{
 }
 
 int getuint(unsigned long* num)	{
-	int err_code;
 	char input[BUFINPUTSIZE], *p=NULL;
 	p = getnstr(input, BUFINPUTSIZE);
-	err_code = atold(num, p);
-	return err_code;
+	if(!p)
+		return 1;	
+	return atold(num, p);
 }
 
 char* initFormatList(unsigned int word_size)	{

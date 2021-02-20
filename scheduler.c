@@ -6,136 +6,213 @@
 
 #include <errno.h>
 #include <malloc.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-#define	FUNCT_S			'v'-'e'
-#define UNDERLINE_LENGTH	0X40
-#define AUTOSAVENAME		"db/autosave.db"
-typedef int(*funct)(void);
+#define SCHEDPROCSIZE ('v' - 'e' + 1)	
 
-static unsigned long	bufferNumber;
-static database*	currentDatabase;
-static FILE*		currentFile;
-static funct		functs[FUNCT_S];
-static char*		formatList;
-static char*		underline;
-static char*		menu;
-static char**		dialogs;
-unsigned long		wordSize;
-int			errnum;
+typedef (int)(*procedure)(void);
 
-static void	init_functs(void);
-static void	uninit_functs(void);
-static void	init_scheduler(void);
-static int	uninit_scheduler(int);
-static int	autosave_database(void);
+static procedure schedulerProcedures[SCHEDPROCSIZE];
+static void initSchedulerProcedures(void);
 
-static int new_entry(void);
-static int edit_data(void);
-static int find_entry(void);
-static int delete_data(void);
-static int save_to_file(void);
-static int load_from_file(void);
-static int show_all(void);
-static int sort_data(void);
+static char *menu;
+static char **dialog;
+
+static database *currentDatabase;
+static FILE *currentFile;
+
+static attributes orderInputAttrs[DIALOG_SIZE];
+static void initInputOrder(void);
+
+/*IMPORTED DATA*/
+/*********************************************************************************/
+size_t wordSize;
+/*********************************************************************************/
+
+/*MAIN PROCEDURES PROTOTYPES*/
+/*********************************************************************************/
+/*Initalizaition static objects*/
+static void initScheduler(void);
+/*Conversally. Get an error code*/
+static void uninitScheduler(int);
+
+static int newWorker(void);
+static int editData(void);
+static int findWorker(void);
+static int deleteData(void);
+static int saveToFile(void);
+static int loadFromFile(void);
+static int showAllWorkers(void);
+static int sortData(void);
 static int quit(void);
+/*********************************************************************************/
 
-static void free2dptr(void**, size_t, size_t);
-/************************************************/
-int scheduler(void)	{
-	
-	while(1)	{
-		procs[key]();
+/*OTHER PROTOTYPES*/
+/*********************************************************************************/
+static int inputData(entry*); /*1 - input error; (-1) - invalid input;*/
+/*********************************************************************************/
+
+
+/*SCHEDULER'S IMPLEMENTATION*/
+/*********************************************************************************/
+int  scheduler(void)	{
+	int resultProc, key;
+
+	initScheduler();
+	while(1)	i{
+		puts(menu);
+		key = getKey();
+		result = schedulerProcedures[key];
 	}
-	
-}
-/************************************************/
-static void init_functs(void)	{
-	functs['n'] = new_entry;
-	functs['e'] = edit_data;
-	functs['f'] = find_entry;
-	functs['d'] = delete_data;
-	functs['s'] = save_to_file;
-	functs['l'] = load_from_file;
-	functs['v'] = show_all;
-	functs['c'] = sort_data;
-	functs['q'] = quit;
-}
-static void uninit_functs(void)	{
-	memset(functs, 0x00, FUNCTS_S * sizeof(funct));
-}
 
-static void init_scheduler(void)	{
+	uninitScheduler(0);
+}
+/*********************************************************************************/
+
+
+/*MAIN PROCEDURES IMPLEMENTATIONS*/
+/*********************************************************************************/
+static void initScheduler(void)	{
+	int errcode;
+	initSchedulerProcedures();
 	currentDatabase=NULL;
 	currentFile=NULL;
-	errno=0;
-	errnum=0;
 	wordSize = WORD_SIZE;
-	init_functs();
-	formatList = initFormatList(wordSize);
-	underline = initUnderline(UNDERLINE_LENGTH);
 	menu = initSelectMenu();
-	dialogs	= initDialogSet();
-	if(!(formatList && underline && menu && dialogs))	{
-		errnum = errno;
+	dialog = initDialogSet();
+	if(!(menu && dialogs))	{
+		errcode = errno;
 		perror(__func__);
-		exit(errnum);
+		exit(errcode);
 	}
-	perror(__func__);
-	return;
+	initInputOrder();
 }
-
-static void free2dptr(void** ptr, size_t size, size_t membn)	{
-	void **start = ptr, **top = ptr+size*membn;
-	for(;ptr<top;ptr++)	{
-		free(*ptr);
-		*ptr=NULL;
-	}
-	free(start);
-}
-
-static int uninit_scheduler(int err_code)	{
-	int res;
-	/*save current database(s)(in case it's exists) into save-file;*/
+static void uninitScheduler(int errcode){
 	if(currentDatabase)	{
-		if((currentDatabase->headEntry))	{
-			res = autosave_database();
-			if(res)
-				 printerr("Autosaving's error. Written %d bytes\n", res);
-			demakeDatabase(currentDatabase);
-			currentDatabase=NULL;
-		}
+		/*save database to file(INSERT)*/
+		demakeDatabase(currentBase);
+		curretnBase=NULL;
 	}
-	/*deallocating and uninitaliazing global objects;*/
-	uninit_functs();
-	free(formatList);
-	free(underline);
-	free(menu);
-	free2dptr(dialogs, DIALOGS_SIZE);
-	formatList=underline=menu=dialogs;
-	/*close all file descriptors;*/
 	if(currentFile)	{
 		closedb(currentFile);
 	}
-	/*print a report by err_code;*/
-	printerr("%s", strerror(err_code));
-	/*call an exit() or abort();*/
-	exit(err_code);
+	free(menu);
+	free(dialog);
+	menu=dialog=NULL;
 }
 
-static int autosave_database(void)	{
-	FILE* fd=NULL;
+static int newWorker(void)	{
+	entry buffer, *target=NULL;
 	int res;
-	fd = createdb(AUTOSAVENAME);
-	if(!fd)	{
-		fd = opendb(AUTOSAVENAME);
-		if(!fd)
-			return -1;
+
+	/*fill buffer*/
+	res = inputData(&buffer);
+	/*checkInput*/
+	if(res)	{
+		/*res==1?(TYPE2: INPUT_ERROR):(TYPE3);*/
 	}
-	res = writeToFile(fd, currentDatabase->headEntry, currentDatabase->occupiedMem);
-	closedb(fd);
-	return ((int)(currentDatabase->occupiedMem) - res);
+	/*checkID*/
+	res = currentDatabase ? checkID(currentDatabase, buffer.ID) : 0;
+	if(res)	{
+		/*TYPE3*/
+	}
+	/*allocation new entry in database*/
+	if(!currentDatabase)	{
+		currentDatabase = makeDatabase();
+		if(!currentDatabase)	{
+			/*TYPE3: ALLOCATION MEMORY*/
+			/*EXIT FROM FUNCT() TO UNINIT()*/
+		}
+	}
+	if(!enoughMem(currentDatabase))	{
+		res = pageRealloc(currentDatabase, 1);
+		if(res)	{
+			/*TYPE3: ALLOCATION MEMORY*/
+			/*EXIT FROM...*/
+		}
+	}
+	target = newEntry(currentDatabase);
+	/*copy(new entry, buffer)*/
+	copy(target, &buffer);
+	return 0;
 }
-/*************************************************/
+static int editData(void)	{}
+static int findWorker(void)	{}
+static int deleteData(void)	{}
+static int saveToFile(void)	{}
+static int loadFromFile(void)	{}
+static int showAllWorkers(void)	{}
+static int sortData(void)	{}
+static int quit(void)		{}
+/*********************************************************************************/
+
+/*OTHER FUNCTIONS IMPLEMETNATIONS*/
+/*********************************************************************************/
+static void initSchedulerProcedures(void)	{
+	schedulerProcedures['n']= newWorker;
+	schedulerProcedures['e']= editData;
+	schedulerProcedures['f']= findWorker;
+	schedulerProcedures['d']= deleteData;
+	schedulerProcedures['s']= saveToFile;
+	schedulerProcedures['r']= loadFromFile;
+	schedulerProcedures['v']= showAllWorkers;
+	schedulerProcedures['c']= sortData;
+	schedulerProcedures['q']= quit;
+	return;
+}
+
+static void initInputOrder(void)	{	
+	inputOrderAttrs[0]=none;
+	inputOrderAttrs[1]=id;
+	inputOrderAttrs[2]=name2;
+	inputOrderAttrs[3]=name1;
+	inputOrderAttrs[4]=name3;
+	inputOrderAttrs[5]=pos;
+	inputOrderAttrs[6]=payperh;
+	inputOrderAttrs[7]=hrs;
+}
+
+static int inputData(entry* ent)	{
+	size_t size;
+	char bufferString[wordSize];
+	unsigned long bufferNumber;
+	attributes *pattr;
+	char **pdialogs, **max;
+	int res=0;
+
+	size = DIALOGS_SIZE;
+	pdialogs = dialogs;
+	max = pdialogs + size;
+	pattr = inputOrderAttrs;
+	while(pdialogs<max)	{
+		puts(*pdialogs);
+		if(*pattr>none)	{
+			/**pattr<payperh?getnstr():getuint()*/
+			/*chkError*/
+			if(*pattr<payperh)	{
+				if(!getnstr(bufferString, wordSize))	{
+					/*INPUT ERROR*/
+					return 1;
+				}
+				setData(ent, bufferString, *pattr);
+			}
+			else if(*pattr>=payperh)	{
+				res = getuint(bufferNumber);
+				if(!res)	{
+					setData(ent, bufferNumber, *pattr);
+				}
+				else	{
+					if(res==1)	{/*INPUT ERROR*/}
+					if(res==-1)	{/*INVALID INPUT*/}
+					break;
+				}
+			}
+		}			
+		pdialogs++;
+		pattrs++;
+	}
+	return res;
+}
+/*********************************************************************************/

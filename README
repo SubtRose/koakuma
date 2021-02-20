@@ -22,17 +22,29 @@ CURRENT TASKS:
 	- read about VAL(varues array's length);
 	- need to partially rewrite;
 + write a file input/output inteface;
-+ make an error handling;
-	+ define a grace place in code;i
-	+ define a reactions on each type of error;
-		* allocation memory;
-		* open/write/read/ files;
-		* input/output's error;
-		common case's reaction:
-			1. save a current database(s) into autosave file;
-			2. close all file decriptors;
-			3. call an exit() or abort();
-	+ define error's output:	char* strerr(int);
+- make an error handling;
+	- error's type:
+		* allocation memory/file-work, crucial errors(TYPE1);
+		reaction(call to uninitScheduler(int err_code)):
+			1. save a current database;
+			2. close all file descriptors;
+			3. uninitalization all static objects;
+			4. print(strerror(errno));
+			5. call exit(errno);
+		* allocatiom memory/file-work/input-errors, non-crucial errors;
+		reaction(TYPE2):
+			1. print(strerror(errno));
+			2. errno=0;
+			3. return control to caller;
+		* user's error, a like input's error(TYPE3);
+		reaction:
+			1. set input's error;
+			2. print(input's error);
+			3. try again;
+
+		*input_error: 	invalid number,
+				key_is_notvalid,
+				id_alreay_exists;
 - append a scheduler module (aside sort());
 	+ init/uninit functions;
 	- new_entry();

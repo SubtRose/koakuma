@@ -142,3 +142,7 @@ void swapEntries(entry* ent0, entry* ent1)	{
 	p_tmp = NULL;
 	return;
 }
+
+void copyEntries(entry* dest, entry* src)	{
+	memmove(*dest, *src, sizeof(entry));
+}

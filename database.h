@@ -22,13 +22,14 @@ typedef struct _database {
 } database;
 
 typedef enum _attributes 
-	{pos, name1, name2, name3, payperh, hrs, id, pay} 
+	{none, pos, name1, name2, name3, payperh, hrs, id, pay} 
 attributes;
 
 /*That above functions don't controls for memory!*/
 
 database*	makeDatabase(void);
 void		demakeDatabase(database*);
+/*newEntry() will return a new object, if was succesfully, else will return NULL;*/
 entry*		newEntry(database*);
 entry*		remEntry(entry*);
 void		setData(entry*, void*, attributes);
@@ -44,5 +45,6 @@ int		isemptyDB(database*);
 /*and negative, if have be need to deallocating;*/
 int		pageRealloc(database*, int);
 void		swapEntries(entry*, entry*);
+void		copyEntries(entry*, entry*);
 
 #endif
