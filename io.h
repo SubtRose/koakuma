@@ -7,7 +7,9 @@
 /*atold() return -1, in case const char* w isn't a number.*/
 int		atold(unsigned long* , char* );
 void 		printerr(const char*, ...);
-int		getKey(void);
+int		getChkey(void);
+/*return 1 - yes, 0 - no, (-1) - invalid output*/
+int		yesOrNo(void);
 /*Buffer must be alloted for string, buffer's size must be equaled at least 
  * word_size.*/
 char*		getnstr(char*, size_t);

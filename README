@@ -23,7 +23,6 @@ CURRENT TASKS:
 	- need to partially rewrite;
 + write a file input/output inteface;
 - make an error handling;
-- make TABS list;
 	- error's type:
 		* allocation memory/file-work, crucial errors(TYPE1);
 		reaction(call to uninitScheduler(int err_code)):
@@ -48,11 +47,11 @@ CURRENT TASKS:
 				id_alreay_exists;
 - append a scheduler module (aside sort());
 	+ init/uninit functions;
-	- new_entry();
-	- edit_data();
-	- find_entry();
-	- delete_data();
-	- save_to_file();
+	+ new_entry();
+	+ edit_data();
+	+ find_entry();
+	+ delete_data();
+	+ save_to_file();
 	- load_from_file();
 	- show_all();
 	- sort_data();

@@ -10,7 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define SCHEDPROCSIZE ('v' - 'e' + 1)	
+#define SCHEDPROCSIZE ('v' - 'e' + 1)
+#define FILENAMESIZE	0X20
 
 typedef (int)(*procedure)(void);
 
@@ -69,8 +70,12 @@ int  scheduler(void)	{
 	initScheduler();
 	while(1)	{
 		puts(menu);
-		key = getKey();
-		result = schedulerProcedures[key];
+		key = getChkey();
+		if(key<0)	{
+			puts("Be more carefully\n");
+			continue;
+		}
+		result = schedulerProcedures[key]();
 	}
 
 	uninitScheduler(0);
@@ -92,15 +97,13 @@ static void initScheduler(void)	{
 	underline = initUnderline(wordSize);
 	tabs = initTabs(wordSIze);
 	if(!(menu && dialogs && formatOutput && underline && tabs))	{
-		errcode = errno;
-		perror(__func__);
-		exit(errcode);
+			/*TYPE1:ALLOCATION MEMORY*/
 	}
 	initInputOrder();
 }
 static void uninitScheduler(int errcode){
 	if(currentDatabase)	{
-		/*save database to file(INSERT)*/
+		/*SAVE A DATABASE AT FILE*/
 		demakeDatabase(currentDatabase);
 		curretnDatabase=NULL;
 	}
@@ -203,7 +206,7 @@ static int findWorker(void)	{
 	listEntry* List;
 	
 	/*do exists current database and isnot empty?*/
-	if(currentDatabase && isempty(currentDatabase))	{
+	if(!(currentDatabase && isempty(currentDatabase)))	{
 		/*TYPE2*/
 	}
 	/*input a data for search*/
@@ -226,22 +229,115 @@ static int findWorker(void)	{
 		puts(underline);
 		displayList(List);
 	}
-	else
-		/*NOTHING_FOUND*/;
+	else	{
+		puts("Worker is not found.\n");
+		removeList(List);
+		return /*NOTHING_FOUND*/;
+	}
 
 	removeList(List);
 	return 0;
 }
-static int deleteData(void)	{
-	
-	/*DO EXISTS CURRENT BUFFER AND ISNOT EMPTY?*/
-	/*INPUT DATA-ATTRIBUTES FOR SEARCH*/
-	/*SEARCH AN ENTRY IS NEED BY DATA-ATTRIBUTES*/
-	/*DISPLAY THIS ENTRY*/
-	/*....*/
+static int deleteData(void)	{	
+	unsigned long ID;
+	int res;
+	listEntry* List;
+
+	/*do exists current database and isnot empty?*/
+	if(!(currentDatabase && isempty(currentDatabase)))	{
+		/*TYPE2*/
+	}
+	/*input ID for search*/
+	puts("Enter ID:\t");
+	res = getuint(&ID);
+	if(res==-1)	{
+		/*TYPE3: INVALID ID*/
+	}
+	/*search an entry what is need by ID*/
+	List = findData(currentDatabase, &ID, id);
+	/*display this entry*/
+	if(List->list_s)	{
+		puts(tabs):
+		puts(underline);
+		displayEntry(*List);
+	}
+	else	{
+		puts("Worker isnot found.\n");
+		removeList(List);
+		return /*NOTHIND_FOUND*/;
+	}
+	/*delete this entry*/
+	remEntry(*List);
+	puts("Worker has been deleted.\n");
+	removeList(List);
+	return 0;
 }
-static int saveToFile(void)	{}
-static int loadFromFile(void)	{}
+static int saveToFile(void)	{
+	char filename[FILENAMESIZE];
+	FILE *file;
+	int res;
+	unsigned long nbytes, wrtbytes;
+	entry *source;
+
+	/*do existst any database and its not empty?*/
+	if(!(current Database && isempty(curretnDatabase)))	{
+		/*TYPE2*/
+	}
+	/*input filename*/
+	getnstr(filename, FILENAMESIZE);
+	/*if this file already exists*/
+	file = opendb(filename);
+	if(file)	{
+		/*exchange or not?*/
+		puts("Such file is already exists. Do rewrite it or not?\n");
+		res = yesOrNo();
+		if(res<0)	{
+			puts("Invalid input\n");
+			closedb(file);
+			return /*INVAL_INPUT*/;
+		}
+		else if(!res)	{
+			puts("Ok..can try again\n");
+			closedb(file);
+			return 0;
+		}
+		else if(res==1)	{
+			closedb(file);
+			remdb(filename);
+		}
+	}
+	/*create a file*/
+	file = createdb(filname);
+	if(!file)	{
+		puts("Failed to create file");
+		return /*FILEWORK_ERROR*/;
+	}
+	/*write to file*/
+	source = getHeadDB(currentDatabase);
+	nbytes = currentDatabase->occupiedMem;
+	wrtbytes = writeToFile(file, source, nbytes);
+	/*check ferror*/
+	if(wrtbytes!=nbytes)	{
+		/*TYPE2*/;
+	}
+	/*close a file*/
+	closedb(file);
+	printf("File %s is succesfully written\n", filename);
+	return 0;
+}
+static int loadFromFile(void)	{
+	/*DO EXISTS ANY DATABASE AND ITS NOT EMPTY?*/
+		/*SAVE OR NOT?*/
+		/*IF - SAVE, THEN CALL SAVETOFILE() OR AUTOSAVE()*/
+		/*REMOVE CURRENT DATABASE*/
+	/*INPUT FILENAME*/
+	/*IF FILE ISNOT EXIST, THEN RETURN*/
+	/*OPEN FILE*/
+	/*CREATE NEW DATABASE*/
+	/*WRITE FROM FILE TO DATABASE*/
+	/*CHECK FERROR*/
+	/*CLOSE FILE*/
+}
 static int showAllWorkers(void)	{}
 static int sortData(void)	{}
 static int quit(void)		{}

@@ -18,6 +18,9 @@ FILE* createdb(const char *fname)	{
 FILE* opendb(const char* fname)	{
 	return fopen(fname, "rb+");
 }
+void remdb(const char* fname)	{
+	remove(fname);
+}
 
 void closedb(FILE* db)	{
 	if(db)

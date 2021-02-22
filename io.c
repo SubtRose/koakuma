@@ -6,7 +6,7 @@
 #include <string.h>
 #define	BUFINPUTSIZE	0X800
 #define ASCIIOFS	0x30
-#define KEYS		"befdsrvcq"
+#define CHKEYS		"befdsrvcq"
 #define COLONSIZE	0X08
 #define PRETABS		"%%%ds%%%ds%%%ds%%%ds%%%ds%%%ds%%%ds%%%ds\n"
 #define	PREFORMATLIST	"%%%dd%%%ds%%%ds%%%ds%%%ds%%%dd%%%dd%%%dd\n"
@@ -28,7 +28,7 @@
 #define DIA7		"Hr.pay:"
 #define DIA8		"Hours:"
 
-static int verify_chkey(int);
+static int verify_chkey(int, const char* set_key);
 static unsigned long get_bufsize(unsigned long);
 
 void printerr(const char* msg, ...)	{
@@ -39,14 +39,24 @@ void printerr(const char* msg, ...)	{
 }
 
 /*Return negative number, if no function is succesfully completed.*/
-int getKey(void)	{
+int getChkey(void)	{
 	char input[BUFINPUTSIZE], *p = NULL;
 	int res;
 	p = fgets(input, BUFINPUTSIZE, stdin);
-	res = (int)*p;
-	if(verify_chkey(res))
+	res = (int)tolower(*p);
+	if(verify_chkey(res, CHKEYS))
 		res = -1;
 	return res;
+}
+
+int yesOrNo(void)	{
+	char input[BUFINPUTSIZE];
+	int res;
+	fgets(input, BUFINPUTSIZE, stdin);
+	res = tolower(input[0]);
+	if(res=='y')	return 1;
+	if(res=='n')	return 0;
+	else		return -1;
 }
 
 /*Buffer must be alloted for string, buffer's size must be equaled at least 
@@ -122,8 +132,8 @@ char** initDialogSet(void)	{
 	return res;
 }
 /*******************************************************************************/
-static int verify_chkey(int ch)	{
-	return !((ptrdiff_t)strchr(KEYS, ch));
+static int verify_chkey(int ch, const char* set_keys)	{
+	return !((ptrdiff_t)strchr(set_keys, ch));
 }
 /*atold() return -1, in case const char* w isn't a number.*/
 int atold(unsigned long* num, char* str)	{

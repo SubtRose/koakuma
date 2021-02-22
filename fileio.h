@@ -4,11 +4,12 @@
 #include <stdio.h>
 
 /*createdb() make a file, and open it.
- * If this file already exists, it return NULL.*/
+ * If this file already exists, it will return NULL.*/
 FILE*	createdb(const char*);
 /*Function opendb() open an existed file. If this file doesn't exists, 
  * function return NULL.*/
 FILE*	opendb(const char*);
+void 	remdb(const char*);
 void	closedb(FILE*);
 /*Next two functions return written/read bytes.*/
 int	writeToFile(FILE*, const void*, size_t);

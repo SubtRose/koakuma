@@ -43,6 +43,7 @@ entry*		newEntry(database*);
 entry*		remEntry(entry*);
 void		setData(entry*, void*, attributes);
 void*		getData(entry*, attributes);
+
 /*search by string(names) or ID*/
 listEntry*	findData(database*, void* data, attributes);
 
