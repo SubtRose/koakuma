@@ -7,7 +7,9 @@
 #define	BUFINPUTSIZE	0X800
 #define ASCIIOFS	0x30
 #define KEYS		"befdsrvcq"
-#define PREFORMATLIST	"%%8.lu%%%udlu%%%udlu%%%udlu%%udlu%%8.lu%%8.lu%%8.lu\n"	
+#define COLONSIZE	0X08
+#define PRETABS		"%%%ds%%%ds%%%ds%%%ds%%%ds%%%ds%%%ds%%%ds\n"
+#define	PREFORMATLIST	"%%%dd%%%ds%%%ds%%%ds%%%ds%%%dd%%%dd%%%dd\n"
 #define	SELECTMENU	"Select an action:\n\
 			N New worker.\n\
 			E Edit data.\n\
@@ -27,7 +29,7 @@
 #define DIA8		"Hours:"
 
 static int verify_chkey(int);
-static int atold(unsigned long*, char*);
+static unsigned long get_bufsize(unsigned long);
 
 void printerr(const char* msg, ...)	{
 	va_list args;
@@ -61,20 +63,39 @@ int getuint(unsigned long* num)	{
 	return atold(num, p);
 }
 
+static unsigned long get_bufsize(unsigned long ws)	{
+	return (4*COLONSIZE + 4*ws + 2);
+}
+char* initTabs(unsigned int word_size)	{
+	unsigned long bs = get_bufsize(word_size);
+	char* pretabs = calloc(bs, 1);
+	char* tabs = calloc(bs, 1);
+	if(pretabs)	{
+		snprintf(pretabs,bs, PRETABS, COLONSIZE, word_size, word_size, word_sizeword_size, COLONSIZE,COLONSIZE,COLONSIZE, COLONSIZE);
+		if(tabs)	{
+			snprintf(tabs, "ID", "Surname", "Name", "Patronymic", "Post", "h/pay", "Hours", "Salary");
+		}
+		free(pretabs);
+		pretabs=NULL;
+	}
+	return tabs;
+}
 char* initFormatList(unsigned int word_size)	{
-	unsigned long s = strlen(PREFORMATLIST) + 0x40;
-	char *format = calloc(s, sizeof(char));
-	if(format)
-		snprintf(format, s, PREFORMATLIST, 
-				word_size, word_size, word_size, word_size);
+	unsigned long bs = get_bufsize(word_size);
+	char* format = calloc(sizeof(char), bs);
+	if(format)	{
+		snprintf(format, bs, PREFORMATLIST, COLONSIZE, word_size, word_size, word_size, word_size, COLONSIZE, COLONSIZE, COLONSIZE);
+	}
 	return format;
 }
 
-char* initUnderline(unsigned int underline_length)	{
-	char* underline = calloc(sizeof(char), underline_length + 1);
-	if(underline)
-		underline = memset(underline, '_', underline_length);
-	return underline;
+char* initUnderline(unsigned int word_size)	{
+	unsigned long bs = get_bufsize(word_size);
+	char* underline = calloc(bs,1);
+	if(underline)	{
+		memset(underline, '_', bs-2);
+		underline[bs-1] = 0xa;
+	}
 }
 
 char* initSelectMenu(void)	{
@@ -105,7 +126,7 @@ static int verify_chkey(int ch)	{
 	return !((ptrdiff_t)strchr(KEYS, ch));
 }
 /*atold() return -1, in case const char* w isn't a number.*/
-static int atold(unsigned long* num, char* str)	{
+int atold(unsigned long* num, char* str)	{
 	int err_code, no_err;
 	unsigned long num_cp = *num;
 	char* p=NULL;

@@ -18,7 +18,10 @@ static procedure schedulerProcedures[SCHEDPROCSIZE];
 static void initSchedulerProcedures(void);
 
 static char *menu;
+static char *formatOutput;
 static char **dialog;
+static char *underline;
+static char *tabs;
 
 static database *currentDatabase;
 static FILE *currentFile;
@@ -51,7 +54,10 @@ static int quit(void);
 
 /*OTHER PROTOTYPES*/
 /*********************************************************************************/
-static int inputData(entry*); /*1 - input error; (-1) - invalid input;*/
+static int	inputData(entry*); /*1 - input error; (-1) - invalid input;*/
+static void	displayEntry(entry*);
+static void	displayDatabase(database*);
+static void	displayList(listEntry*);
 /*********************************************************************************/
 
 
@@ -61,7 +67,7 @@ int  scheduler(void)	{
 	int resultProc, key;
 
 	initScheduler();
-	while(1)	i{
+	while(1)	{
 		puts(menu);
 		key = getKey();
 		result = schedulerProcedures[key];
@@ -82,7 +88,10 @@ static void initScheduler(void)	{
 	wordSize = WORD_SIZE;
 	menu = initSelectMenu();
 	dialog = initDialogSet();
-	if(!(menu && dialogs))	{
+	formatOuptut = initFormatList(wordSize);
+	underline = initUnderline(wordSize);
+	tabs = initTabs(wordSIze);
+	if(!(menu && dialogs && formatOutput && underline && tabs))	{
 		errcode = errno;
 		perror(__func__);
 		exit(errcode);
@@ -92,15 +101,18 @@ static void initScheduler(void)	{
 static void uninitScheduler(int errcode){
 	if(currentDatabase)	{
 		/*save database to file(INSERT)*/
-		demakeDatabase(currentBase);
-		curretnBase=NULL;
+		demakeDatabase(currentDatabase);
+		curretnDatabase=NULL;
 	}
 	if(currentFile)	{
 		closedb(currentFile);
 	}
 	free(menu);
 	free(dialog);
-	menu=dialog=NULL;
+	free(formatOutput);
+	free(underline);
+	free(tabs);
+	menu=dialog=formatOutput=underline=tabs = NULL;
 }
 
 static int newWorker(void)	{
@@ -111,7 +123,7 @@ static int newWorker(void)	{
 	res = inputData(&buffer);
 	/*checkInput*/
 	if(res)	{
-		/*res==1?(TYPE2: INPUT_ERROR):(TYPE3);*/
+		/*TYPE3: INVALID DATA*/
 	}
 	/*checkID*/
 	res = currentDatabase ? checkID(currentDatabase, buffer.ID) : 0;
@@ -122,25 +134,112 @@ static int newWorker(void)	{
 	if(!currentDatabase)	{
 		currentDatabase = makeDatabase();
 		if(!currentDatabase)	{
-			/*TYPE3: ALLOCATION MEMORY*/
+			/*TYPE1: ALLOCATION MEMORY*/
 			/*EXIT FROM FUNCT() TO UNINIT()*/
 		}
 	}
 	if(!enoughMem(currentDatabase))	{
 		res = pageRealloc(currentDatabase, 1);
 		if(res)	{
-			/*TYPE3: ALLOCATION MEMORY*/
+			/*TYPE1: ALLOCATION MEMORY*/
 			/*EXIT FROM...*/
 		}
 	}
 	target = newEntry(currentDatabase);
-	/*copy(new entry, buffer)*/
-	copy(target, &buffer);
+	/*copy(target, buffer)*/
+	copyEntries(target, &buffer);
+	puts("New worker is succersfully append\n");
 	return 0;
 }
-static int editData(void)	{}
-static int findWorker(void)	{}
-static int deleteData(void)	{}
+static int editData(void)	{
+	listEntry* List=NULL;
+	entry buffer;
+	int res;
+	unsigned long ID;
+
+	/*do exists any database and isnot empty?*/
+	if(!(currentDatabase && isempty(currentDatabase)))	{
+		/*TYPE2*/
+	}
+	/*input id for search*/
+	puts("Enter worker's ID:\t");
+	res = getuint(&ID);
+	if(res)	{
+		/*TYPE3*/
+	}
+	/*search an entry is need by id-attribute*/
+	List = findData(currentDatabase, &ID, id);
+	/*display this entry*/
+	if(List->list_s == 0)	{
+		puts("Worker is not found.\n");
+		removeList(List);
+		return /*NOTHING_FOUND*/;
+	}
+	puts();
+	displayEntry(*List);
+	/*fill buffer*/
+	res = inputData(&buffer);
+	/*check input*/
+	if(res)	{
+		/*TYPE3*/
+	}
+	/*check id*/
+	res = checkIDexept(currentDatabase, getData(*List, id), getData(&buffer, id));
+	if(res)	{
+		/*TYPE3: INVALID ID*/
+	}
+	copyEntries(*List, &buffer);
+	puts("Data is succesfully changed\n");
+
+	removeList(List);
+	return 0;
+}
+static int findWorker(void)	{
+	char bufferString[wordSize];
+	unsigned long bufferNumber;
+	int res;
+	void* data;
+	attributes attr;
+	listEntry* List;
+	
+	/*do exists current database and isnot empty?*/
+	if(currentDatabase && isempty(currentDatabase))	{
+		/*TYPE2*/
+	}
+	/*input a data for search*/
+	getnstr(bufferString, wordSize);
+	/*detection a type of data (string or id)*/
+	res = atold(&bufferNumber, bufferString);
+	if(res==-1)	{
+		data = bufferString;
+		attr = name1;
+	}
+	else	{
+		data = &bufferNumber;
+		attr = id;
+	}
+	/*search an entry, what is need, by data*/
+	List = findData(currentDatabase, data, attr);
+	/*display this entry*/
+	if(List->list_s)	{
+		puts(tabs);
+		puts(underline);
+		displayList(List);
+	}
+	else
+		/*NOTHING_FOUND*/;
+
+	removeList(List);
+	return 0;
+}
+static int deleteData(void)	{
+	
+	/*DO EXISTS CURRENT BUFFER AND ISNOT EMPTY?*/
+	/*INPUT DATA-ATTRIBUTES FOR SEARCH*/
+	/*SEARCH AN ENTRY IS NEED BY DATA-ATTRIBUTES*/
+	/*DISPLAY THIS ENTRY*/
+	/*....*/
+}
 static int saveToFile(void)	{}
 static int loadFromFile(void)	{}
 static int showAllWorkers(void)	{}
@@ -214,5 +313,39 @@ static int inputData(entry* ent)	{
 		pattrs++;
 	}
 	return res;
+}
+
+static void displayEntry(entry *ptr)	{
+	unsigned long ID, pay_perh, hours, salary;
+	char *post, *name, *surname, *pathr;
+	if(ptr)	{
+		ID = *getData(ptr, id);	
+		pay_perh = *getData(ptr, payperh);
+		hours = *getData(ptr, hrs);
+		salary = *getData(ptr, pay);
+		post = getData(ptr, pos);
+		name = getData(ptr, name1);
+		surname = getData(ptr, name3);
+		pathr = getData(ptr, name2);
+		printf(formatOutput, ID, surname, name, pathr, post, pay_perh,hours, salary);
+	}
+}
+static void displayDatabase(database *db)	{
+	entry *ptr, *lim;
+	if(db && (ptr=getHeadDB(db)))	{
+		lim = getTailDB(db) + 1;
+		for(;ptr<lim; ptr++)	{
+			displayEntry(ptr);
+		}	
+	}
+}
+static void displayList(listEntry* le)	{
+	entry *ptr, *lim;
+	if(le && le->list)	{
+		ptr = *(le->list);
+		lim = ptr + le->list_s;
+		for(;ptr<lim;ptr++)
+			displayEntry(ptr);
+	}
 }
 /*********************************************************************************/

@@ -23,6 +23,7 @@ CURRENT TASKS:
 	- need to partially rewrite;
 + write a file input/output inteface;
 - make an error handling;
+- make TABS list;
 	- error's type:
 		* allocation memory/file-work, crucial errors(TYPE1);
 		reaction(call to uninitScheduler(int err_code)):

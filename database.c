@@ -11,6 +11,18 @@ static unsigned long*	get_uint_data(entry*, attributes);
 
 /**********************************************************************************/
 
+entry* getHeadDB(database *db)	{
+	return db->headEntry;
+}
+entry* getTailDB(database *db)	{
+	return (db->headEntry + getSizeDB(db) - 1);
+}
+unsigned long getSizeDB(database *db)	{
+	if(!(db->occupiedMem))
+		return 0;
+	return db->allMem / db->occupiedMem;
+}
+
 database* makeDatabase(void)	{
 	 return (database*)calloc(sizeof(database), 1);
 }
@@ -93,6 +105,57 @@ static unsigned long* get_uint_data(entry* ent, attributes attr)	{
 	return NULL;
 }
 
+static listEntry* find_by_id(database* db, unsigned long id)	{
+	listEntry *new = NULL;
+	entry *ptr = NULL, *lim = NULL;
+	int res;
+
+	ptr = db->headEntry;
+	lim = ptr + (db->allMem / db->occupiedMem);
+	new = createList();
+	if(!new)
+		return NULL;
+	for(;ptr<lim; ptr++)	{
+		if(ptr->ID == id)	{
+			res = addList(new, ptr);
+			if(res)
+				return NULL;
+		}
+	}
+	return new;
+}
+
+static listEntry* find_by_string(database* db, const char* pattern)	{
+	listEntry *new=NULL;
+	entry *ptr = NULL, *lim = NULL;
+	int res;
+
+	new = createList();
+	if(!new)
+		return NULL;
+	ptr = db->headEntry;
+	lim = ptr + (db->allMem / db->occupiedMem);
+	for(;ptr<lim; ptr++)	{
+		if(	!(strncmp(pattern, db->position, WORD_SIZE) &&
+			strncmp(pattern, db->firstName, WORD_SIZE) &&
+			strncmp(pattern, db->secondName, WORD_SIZE) &&
+			strncmp(pattern, db->lastName, WORD_SIZE))
+		  )
+		{
+			res = addList(new, ptr);
+			if(res)
+				return NULL;
+		}	
+	}
+	return new;
+}
+
+listEntry* findData(database* db, void* data, attributes attr)	{	
+	/*two pieces: find by ID and find by String*/
+	return (attr>none && attr<payperh) ? find_by_string(db, (const char*)data)
+		: find_by_id(db, (unsigned long)(*data));
+}
+
 int checkID(database* db, unsigned long id)	{
 	unsigned int n = db->occupiedMem / sizeof(entry);
 	entry* ptr = db->headEntry;
@@ -100,6 +163,21 @@ int checkID(database* db, unsigned long id)	{
 	for(unsigned int i = 0; i<n && !(retv = ((ptr+i)->ID==id)); i++);
 	ptr = NULL;
 	return retv;
+}
+/*ptr->id==id ptr->id==exept
+ *0		0	cont
+  0		1	cont
+  1		0	ret 1;
+  1		1	cont
+ * */
+int checkIDexept(database* db, unsigned long exept, unsigned long id)	{
+	entry *ptr = getHeadDB(db);
+	entry *tail = getTailDB(db);
+	for(;ptr<=tail;ptr++)	{
+		if((ptr->id == id) && (ptr->id == exept))
+			return 1;
+	}
+	return 0;
 }
 
 int enoughMem(database* db)	{
@@ -145,4 +223,30 @@ void swapEntries(entry* ent0, entry* ent1)	{
 
 void copyEntries(entry* dest, entry* src)	{
 	memmove(*dest, *src, sizeof(entry));
+}
+
+listEntry* createList(void)	{
+	return (listEntry*)malloc(sizeof(listEntry));
+}
+int addList(listEntry* exist_list, entry* new)	{
+	entry **ptr = exist_list->list;
+	unsigned long newsize = exist_list->list_s + 1, pentry_s = sizeof(entry*);
+	ptr = realloc(ptr, pentry_s * newsize);
+	if(!ptr)
+		return -1;
+	else	{
+		*(ptr + newsize - 1) = new;
+		exist_list->list = ptr;
+		eixst_list->list_s = newsize;
+		return 0;
+	}
+}
+void removeList(listEntry* exist_list)	{
+	entry** ptr = exist_list->list;
+	unsigned long size = exist_list->list_s;
+	if(ptr)	{
+		free(ptr);
+		exist_list->list=NULL;
+	}
+	free(exist_list);
 }
