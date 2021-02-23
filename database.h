@@ -56,6 +56,7 @@ int		toomanyMem(database*);
 int		isemptyDB(database*);
 /*variable growDir is one in case, if have be need to allocating memory,*/
 /*and negative, if have be need to deallocating;*/
+/*Upon succesfully complete, return 0;*/
 int		pageRealloc(database*, int);
 void		swapEntries(entry*, entry*);
 void		copyEntries(entry*, entry*);

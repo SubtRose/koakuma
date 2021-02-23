@@ -18,6 +18,13 @@ FILE* createdb(const char *fname)	{
 FILE* opendb(const char* fname)	{
 	return fopen(fname, "rb+");
 }
+size_t getfilesize(FILE* fd)	{
+	size_t size;
+	fseek(fd, 0, SEEK_END);
+	size = ftell(fd);
+	fseek(fd, 0, SEEK_SET);
+	return size;
+}
 void remdb(const char* fname)	{
 	remove(fname);
 }

@@ -164,12 +164,7 @@ int checkID(database* db, unsigned long id)	{
 	ptr = NULL;
 	return retv;
 }
-/*ptr->id==id ptr->id==exept
- *0		0	cont
-  0		1	cont
-  1		0	ret 1;
-  1		1	cont
- * */
+
 int checkIDexept(database* db, unsigned long exept, unsigned long id)	{
 	entry *ptr = getHeadDB(db);
 	entry *tail = getTailDB(db);

@@ -9,6 +9,7 @@ FILE*	createdb(const char*);
 /*Function opendb() open an existed file. If this file doesn't exists, 
  * function return NULL.*/
 FILE*	opendb(const char*);
+size_t	getsizefile(FILE*);
 void 	remdb(const char*);
 void	closedb(FILE*);
 /*Next two functions return written/read bytes.*/

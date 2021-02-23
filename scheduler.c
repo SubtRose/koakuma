@@ -10,8 +10,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define NULL		(void*)0x00
+
 #define SCHEDPROCSIZE ('v' - 'e' + 1)
-#define FILENAMESIZE	0X20
+#define FILENAMESIZE	0X30
+
+#define AUTOSAVENAME	"autosave%d.db"
+#define MAXNFILES	0X8
 
 typedef (int)(*procedure)(void);
 
@@ -38,9 +43,10 @@ size_t wordSize;
 /*MAIN PROCEDURES PROTOTYPES*/
 /*********************************************************************************/
 /*Initalizaition static objects*/
-static void initScheduler(void);
+static void	initScheduler(void);
 /*Conversally. Get an error code*/
-static void uninitScheduler(int);
+static void	uninitScheduler(int);
+static int	autosave(void);
 
 static int newWorker(void);
 static int editData(void);
@@ -103,7 +109,7 @@ static void initScheduler(void)	{
 }
 static void uninitScheduler(int errcode){
 	if(currentDatabase)	{
-		/*SAVE A DATABASE AT FILE*/
+		/*AUTOSAVE A DATABASE AT FILE*/
 		demakeDatabase(currentDatabase);
 		curretnDatabase=NULL;
 	}
@@ -116,6 +122,25 @@ static void uninitScheduler(int errcode){
 	free(underline);
 	free(tabs);
 	menu=dialog=formatOutput=underline=tabs = NULL;
+}
+
+static int autosave(void)	{
+	char filename[FILENAMESIZE];
+	FILE *file=NULL;
+	int i;
+	entry* source;
+	unsigned long nbytes, wrtbytes;
+	if(isempty(currentDatabase))
+		return 0;
+	for(i=0;i<MAXNFILES && !file; i++)	{
+		snprintf(filename, FILENAMESIZE, AUTOSAVENAME,i);
+		file = createdb(filename);		
+	}
+	source = getHeadDB(currentDatabase);
+	nbytes = currentDatabase->occupiedMem;
+	wrtbytes = writeToFile(file, source, nbytes);	
+	closedb(file);
+	return (int)(wrtbytes-nbytes);
 }
 
 static int newWorker(void)	{
@@ -160,8 +185,8 @@ static int editData(void)	{
 	int res;
 	unsigned long ID;
 
-	/*do exists any database and isnot empty?*/
-	if(!(currentDatabase && isempty(currentDatabase)))	{
+	/*do exists some database and isnot empty?*/
+	if(!currentDatabase || isempty(currentDatabase))	{
 		/*TYPE2*/
 	}
 	/*input id for search*/
@@ -205,8 +230,8 @@ static int findWorker(void)	{
 	attributes attr;
 	listEntry* List;
 	
-	/*do exists current database and isnot empty?*/
-	if(!(currentDatabase && isempty(currentDatabase)))	{
+	/*do exists some database and isnot empty?*/
+	if(!currentDatabase || isempty(currentDatabase))	{
 		/*TYPE2*/
 	}
 	/*input a data for search*/
@@ -243,8 +268,8 @@ static int deleteData(void)	{
 	int res;
 	listEntry* List;
 
-	/*do exists current database and isnot empty?*/
-	if(!(currentDatabase && isempty(currentDatabase)))	{
+	/*do exists some database and isnot empty?*/
+	if(!currentDatabase || isempty(currentDatabase))	{
 		/*TYPE2*/
 	}
 	/*input ID for search*/
@@ -279,8 +304,8 @@ static int saveToFile(void)	{
 	unsigned long nbytes, wrtbytes;
 	entry *source;
 
-	/*do existst any database and its not empty?*/
-	if(!(current Database && isempty(curretnDatabase)))	{
+	/*do existst some database and its not empty?*/
+	if(!currentDatabase || isempty(currentDatabase))	{
 		/*TYPE2*/
 	}
 	/*input filename*/
@@ -289,7 +314,7 @@ static int saveToFile(void)	{
 	file = opendb(filename);
 	if(file)	{
 		/*exchange or not?*/
-		puts("Such file is already exists. Do rewrite it or not?\n");
+		puts("Such file is already exists. Do rewrite it or not?(y/n)\t");
 		res = yesOrNo();
 		if(res<0)	{
 			puts("Invalid input\n");
@@ -310,7 +335,7 @@ static int saveToFile(void)	{
 	file = createdb(filname);
 	if(!file)	{
 		puts("Failed to create file");
-		return /*FILEWORK_ERROR*/;
+		return /*FAIL_CREATE_FILE*/;
 	}
 	/*write to file*/
 	source = getHeadDB(currentDatabase);
@@ -337,6 +362,62 @@ static int loadFromFile(void)	{
 	/*WRITE FROM FILE TO DATABASE*/
 	/*CHECK FERROR*/
 	/*CLOSE FILE*/
+
+	int res;
+	char filename[FILENAMESIZE];
+	FILE* file;
+	unsigned long rdbytes, filesize;
+
+	/*do exists some database and its not empty?*/
+	if(currentDatabase && !isempty(currentDatabase))	{
+		puts("Do save opened base?(y/n)\t");
+		res = yesOrNo();
+		if(res)	{
+			puts("Autosave?(y/n)\t");
+			res = yesOrNo();
+			res = res ? autosave() : saveToFile();
+			if(res)	{
+				puts("Failed to save to file. Returned %d\n", res);
+				return res;
+			}
+		}
+		demakeDatabase(currentDatabase);
+	}
+	/*input filname*/
+	getnstr(filename, FILENAMESIZE);
+	file = opendb(filename);
+	if(!file)	{
+		puts("Failed to open file %s\n", filename);
+		return /*FAIL_OPEN_FILE*/;
+	}
+	/*create new database*/
+	currentDatabase = makeDatabase();
+	if(!currentDatabase)	{
+		/*TYPE1: ALLOCATION MEMORY*/
+	}
+	filesize = getfilesize(file);
+	if(!filesize)	{
+		puts("File %s is empty\n", filename);
+		closedb(file);
+		return /*EMPTY_FILE*/;
+	}
+	for(; currentDatabase->allMem < filesize;)	{
+		res = pageRealloc(currentDatabase, 1);
+		if(res)	{
+			/*TYPE1: ALLOCATION MEMORY*/
+		}
+	}
+	rdbytes = readFromFile(file, getHeadDB(currentDatabase), filesize);
+	if((rdbytes-filesize))	{
+		printf("Error reading file %s\n", filename);
+		res = /*READFILE_ERROR*/;
+	}
+	else	{
+		puts("Database is succesfully downloaded\n");
+		res=0;
+	}
+	closedb(file);
+	return res;
 }
 static int showAllWorkers(void)	{}
 static int sortData(void)	{}
