@@ -22,8 +22,8 @@ CURRENT TASKS:
 	- read about VAL(varues array's length);
 	- need to partially rewrite;
 + write a file input/output inteface;
-- make an error handling;
-	- error's type:
++ make an error handling;
+	+ error's type:
 		* allocation memory/file-work, crucial errors(TYPE1);
 		reaction(call to uninitScheduler(int err_code)):
 			1. save a current database;
@@ -52,10 +52,11 @@ CURRENT TASKS:
 	+ find_entry();
 	+ delete_data();
 	+ save_to_file();
-	- load_from_file();
-	- show_all();
-	- sort_data();
-	- quit();
+	+ load_from_file();
+	+ show_all();
+	+ quit();
+	+ errors handling;
+	- compile it;
 - write a test environment;
 - write a Makefile;
 	- read about a recipes;

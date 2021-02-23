@@ -9,30 +9,40 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define NULL		(void*)0x00
-
-#define SCHEDPROCSIZE ('v' - 'e' + 1)
+#define SCHEDPROCSIZE ('v' + 1)
 #define FILENAMESIZE	0X30
 
 #define AUTOSAVENAME	"autosave%d.db"
 #define MAXNFILES	0X8
 
-typedef (int)(*procedure)(void);
+/*ERROR VALUES*/
+#define	INVALID_INPUT		0X100
+#define EXIST_ID		0X101
+#define NODATA			0X102
+#define	NOTHING_FOUND		0x103
+#define CREATEFILE_ERROR	0x104
+#define WRITEFILE_ERROR		0x105
+#define OPENFILE_ERROR		0x106
+#define	EMPTY_FILE		0x107
+#define READFILE_ERROR		0x108
+
+typedef int (*procedure)(void);
 
 static procedure schedulerProcedures[SCHEDPROCSIZE];
 static void initSchedulerProcedures(void);
 
 static char *menu;
 static char *formatOutput;
-static char **dialog;
+static char **dialogs;
 static char *underline;
 static char *tabs;
 
 static database *currentDatabase;
 static FILE *currentFile;
 
-static attributes orderInputAttrs[DIALOG_SIZE];
+static attributes inputOrderAttrs[DIALOGS_SIZE];
 static void initInputOrder(void);
 
 /*IMPORTED DATA*/
@@ -45,7 +55,7 @@ size_t wordSize;
 /*Initalizaition static objects*/
 static void	initScheduler(void);
 /*Conversally. Get an error code*/
-static void	uninitScheduler(int);
+static void	uninitScheduler(const char*, int);
 static int	autosave(void);
 
 static int newWorker(void);
@@ -71,7 +81,7 @@ static void	displayList(listEntry*);
 /*SCHEDULER'S IMPLEMENTATION*/
 /*********************************************************************************/
 int  scheduler(void)	{
-	int resultProc, key;
+	int key;
 
 	initScheduler();
 	while(1)	{
@@ -81,10 +91,10 @@ int  scheduler(void)	{
 			puts("Be more carefully\n");
 			continue;
 		}
-		result = schedulerProcedures[key]();
+		schedulerProcedures[key]();
 	}
 
-	uninitScheduler(0);
+	uninitScheduler(__func__, 0);
 }
 /*********************************************************************************/
 
@@ -98,30 +108,38 @@ static void initScheduler(void)	{
 	currentFile=NULL;
 	wordSize = WORD_SIZE;
 	menu = initSelectMenu();
-	dialog = initDialogSet();
-	formatOuptut = initFormatList(wordSize);
+	dialogs = initDialogSet();
+	formatOutput = initFormatList(wordSize);
 	underline = initUnderline(wordSize);
-	tabs = initTabs(wordSIze);
+	tabs = initTabs(wordSize);
 	if(!(menu && dialogs && formatOutput && underline && tabs))	{
-			/*TYPE1:ALLOCATION MEMORY*/
+			errcode=errno;
+			errno=0;
+			uninitScheduler(__func__, errcode);
 	}
 	initInputOrder();
 }
-static void uninitScheduler(int errcode){
+static void uninitScheduler(const char* func, int errcode){
+	char functionName[FILENAMESIZE];
+
 	if(currentDatabase)	{
-		/*AUTOSAVE A DATABASE AT FILE*/
+		autosave();
 		demakeDatabase(currentDatabase);
-		curretnDatabase=NULL;
+		currentDatabase=NULL;
 	}
 	if(currentFile)	{
 		closedb(currentFile);
 	}
 	free(menu);
-	free(dialog);
+	free(dialogs);
 	free(formatOutput);
 	free(underline);
 	free(tabs);
-	menu=dialog=formatOutput=underline=tabs = NULL;
+	menu=formatOutput=underline=tabs = NULL;
+	dialogs=NULL;
+	strncpy(functionName, func ? func : __func__, FILENAMESIZE);
+	funcPerror(functionName, errcode);
+	exit(errcode);
 }
 
 static int autosave(void)	{
@@ -130,7 +148,7 @@ static int autosave(void)	{
 	int i;
 	entry* source;
 	unsigned long nbytes, wrtbytes;
-	if(isempty(currentDatabase))
+	if(isemptyDB(currentDatabase))
 		return 0;
 	for(i=0;i<MAXNFILES && !file; i++)	{
 		snprintf(filename, FILENAMESIZE, AUTOSAVENAME,i);
@@ -145,32 +163,36 @@ static int autosave(void)	{
 
 static int newWorker(void)	{
 	entry buffer, *target=NULL;
-	int res;
+	int res, errcode;
 
 	/*fill buffer*/
 	res = inputData(&buffer);
 	/*checkInput*/
 	if(res)	{
-		/*TYPE3: INVALID DATA*/
+		puts("Invalid input\n");
+		return INVALID_INPUT;
 	}
 	/*checkID*/
 	res = currentDatabase ? checkID(currentDatabase, buffer.ID) : 0;
 	if(res)	{
-		/*TYPE3*/
+		printf("This ID(%lu) is already exists", buffer.ID);
+		return EXIST_ID;
 	}
 	/*allocation new entry in database*/
 	if(!currentDatabase)	{
 		currentDatabase = makeDatabase();
 		if(!currentDatabase)	{
-			/*TYPE1: ALLOCATION MEMORY*/
-			/*EXIT FROM FUNCT() TO UNINIT()*/
+			errcode=errno;
+			errno=0;
+			uninitScheduler(__func__, errcode);
 		}
 	}
 	if(!enoughMem(currentDatabase))	{
 		res = pageRealloc(currentDatabase, 1);
 		if(res)	{
-			/*TYPE1: ALLOCATION MEMORY*/
-			/*EXIT FROM...*/
+			errcode=errno;
+			errno=0;
+			uninitScheduler(__func__, errcode);
 		}
 	}
 	target = newEntry(currentDatabase);
@@ -181,19 +203,21 @@ static int newWorker(void)	{
 }
 static int editData(void)	{
 	listEntry* List=NULL;
-	entry buffer;
+	entry buffer, *target;
 	int res;
 	unsigned long ID;
 
 	/*do exists some database and isnot empty?*/
-	if(!currentDatabase || isempty(currentDatabase))	{
-		/*TYPE2*/
+	if(!currentDatabase || isemptyDB(currentDatabase))	{
+		puts("No data,lol\n");
+		return NODATA;
 	}
 	/*input id for search*/
 	puts("Enter worker's ID:\t");
 	res = getuint(&ID);
 	if(res)	{
-		/*TYPE3*/
+		puts("It's not number\n");
+		return INVALID_INPUT;
 	}
 	/*search an entry is need by id-attribute*/
 	List = findData(currentDatabase, &ID, id);
@@ -201,22 +225,26 @@ static int editData(void)	{
 	if(List->list_s == 0)	{
 		puts("Worker is not found.\n");
 		removeList(List);
-		return /*NOTHING_FOUND*/;
+		return NOTHING_FOUND;
 	}
-	puts();
-	displayEntry(*List);
+	target = *(List->list);
+	puts(tabs);
+	puts(underline);
+	displayEntry(target);
 	/*fill buffer*/
 	res = inputData(&buffer);
 	/*check input*/
 	if(res)	{
-		/*TYPE3*/
+		puts("Invalid input\n");
+		return INVALID_INPUT;
 	}
 	/*check id*/
-	res = checkIDexept(currentDatabase, getData(*List, id), getData(&buffer, id));
+	res = checkIDexept(currentDatabase, *((unsigned long*)getData(target, id)), *((unsigned long*)getData(&buffer, id)));
 	if(res)	{
-		/*TYPE3: INVALID ID*/
+		printf("This ID(%d) is already exists\n", id);
+		return EXIST_ID;
 	}
-	copyEntries(*List, &buffer);
+	copyEntries(target, &buffer);
 	puts("Data is succesfully changed\n");
 
 	removeList(List);
@@ -231,8 +259,9 @@ static int findWorker(void)	{
 	listEntry* List;
 	
 	/*do exists some database and isnot empty?*/
-	if(!currentDatabase || isempty(currentDatabase))	{
-		/*TYPE2*/
+	if(!currentDatabase || isemptyDB(currentDatabase))	{
+		puts("No data,lol\n");
+		return NODATA;
 	}
 	/*input a data for search*/
 	getnstr(bufferString, wordSize);
@@ -257,7 +286,7 @@ static int findWorker(void)	{
 	else	{
 		puts("Worker is not found.\n");
 		removeList(List);
-		return /*NOTHING_FOUND*/;
+		return NOTHING_FOUND;
 	}
 
 	removeList(List);
@@ -265,34 +294,46 @@ static int findWorker(void)	{
 }
 static int deleteData(void)	{	
 	unsigned long ID;
-	int res;
+	int res, errcode;
 	listEntry* List;
+	entry* worker;
 
 	/*do exists some database and isnot empty?*/
-	if(!currentDatabase || isempty(currentDatabase))	{
-		/*TYPE2*/
+	if(!currentDatabase || isemptyDB(currentDatabase))	{		
+		puts("No data,lol\n");
+		return NODATA;
 	}
 	/*input ID for search*/
 	puts("Enter ID:\t");
 	res = getuint(&ID);
-	if(res==-1)	{
-		/*TYPE3: INVALID ID*/
+	if(res==-1)	{		
+		puts("Invalid ID's format,lol\n");
+		return INVALID_INPUT;
 	}
 	/*search an entry what is need by ID*/
 	List = findData(currentDatabase, &ID, id);
 	/*display this entry*/
+	worker = *(List->list);
 	if(List->list_s)	{
-		puts(tabs):
+		puts(tabs);
 		puts(underline);
-		displayEntry(*List);
+		displayEntry(worker);
 	}
 	else	{
 		puts("Worker isnot found.\n");
 		removeList(List);
-		return /*NOTHIND_FOUND*/;
+		return NOTHING_FOUND;
 	}
 	/*delete this entry*/
-	remEntry(*List);
+	remEntry(worker);
+	for(; toomanyMem(currentDatabase);)	{
+		res = pageRealloc(currentDatabase, -1);
+		if(res)	{
+			errcode=errno;
+			errno=0;
+			uninitScheduler(__func__, errcode);
+		}
+	}
 	puts("Worker has been deleted.\n");
 	removeList(List);
 	return 0;
@@ -305,8 +346,9 @@ static int saveToFile(void)	{
 	entry *source;
 
 	/*do existst some database and its not empty?*/
-	if(!currentDatabase || isempty(currentDatabase))	{
-		/*TYPE2*/
+	if(!currentDatabase || isemptyDB(currentDatabase))	{		
+		puts("No data,lol\n");
+		return NODATA;
 	}
 	/*input filename*/
 	getnstr(filename, FILENAMESIZE);
@@ -319,7 +361,7 @@ static int saveToFile(void)	{
 		if(res<0)	{
 			puts("Invalid input\n");
 			closedb(file);
-			return /*INVAL_INPUT*/;
+			return INVALID_INPUT;
 		}
 		else if(!res)	{
 			puts("Ok..can try again\n");
@@ -332,18 +374,19 @@ static int saveToFile(void)	{
 		}
 	}
 	/*create a file*/
-	file = createdb(filname);
+	file = createdb(filename);
 	if(!file)	{
 		puts("Failed to create file");
-		return /*FAIL_CREATE_FILE*/;
+		return CREATEFILE_ERROR;
 	}
 	/*write to file*/
 	source = getHeadDB(currentDatabase);
 	nbytes = currentDatabase->occupiedMem;
 	wrtbytes = writeToFile(file, source, nbytes);
 	/*check ferror*/
-	if(wrtbytes!=nbytes)	{
-		/*TYPE2*/;
+	if(wrtbytes!=nbytes)	{		
+		printf("Write file %s error\n", filename);
+		return WRITEFILE_ERROR;
 	}
 	/*close a file*/
 	closedb(file);
@@ -351,25 +394,13 @@ static int saveToFile(void)	{
 	return 0;
 }
 static int loadFromFile(void)	{
-	/*DO EXISTS ANY DATABASE AND ITS NOT EMPTY?*/
-		/*SAVE OR NOT?*/
-		/*IF - SAVE, THEN CALL SAVETOFILE() OR AUTOSAVE()*/
-		/*REMOVE CURRENT DATABASE*/
-	/*INPUT FILENAME*/
-	/*IF FILE ISNOT EXIST, THEN RETURN*/
-	/*OPEN FILE*/
-	/*CREATE NEW DATABASE*/
-	/*WRITE FROM FILE TO DATABASE*/
-	/*CHECK FERROR*/
-	/*CLOSE FILE*/
-
-	int res;
+	int res, errcode;
 	char filename[FILENAMESIZE];
 	FILE* file;
 	unsigned long rdbytes, filesize;
 
 	/*do exists some database and its not empty?*/
-	if(currentDatabase && !isempty(currentDatabase))	{
+	if(currentDatabase && !isemptyDB(currentDatabase))	{
 		puts("Do save opened base?(y/n)\t");
 		res = yesOrNo();
 		if(res)	{
@@ -377,7 +408,7 @@ static int loadFromFile(void)	{
 			res = yesOrNo();
 			res = res ? autosave() : saveToFile();
 			if(res)	{
-				puts("Failed to save to file. Returned %d\n", res);
+				printf("Failed to save to file. Returned %d\n", res);
 				return res;
 			}
 		}
@@ -387,30 +418,34 @@ static int loadFromFile(void)	{
 	getnstr(filename, FILENAMESIZE);
 	file = opendb(filename);
 	if(!file)	{
-		puts("Failed to open file %s\n", filename);
-		return /*FAIL_OPEN_FILE*/;
+		printf("Failed to open file %s\n", filename);
+		return OPENFILE_ERROR;
 	}
 	/*create new database*/
 	currentDatabase = makeDatabase();
 	if(!currentDatabase)	{
-		/*TYPE1: ALLOCATION MEMORY*/
+		errcode=errno;
+		errno=0;
+		uninitScheduler(__func__, errcode);
 	}
-	filesize = getfilesize(file);
+	filesize = getsizefile(file);
 	if(!filesize)	{
-		puts("File %s is empty\n", filename);
+		printf("File %s is empty\n", filename);
 		closedb(file);
-		return /*EMPTY_FILE*/;
+		return EMPTY_FILE;
 	}
 	for(; currentDatabase->allMem < filesize;)	{
 		res = pageRealloc(currentDatabase, 1);
 		if(res)	{
-			/*TYPE1: ALLOCATION MEMORY*/
+			errcode=errno;
+			errno=0;
+			uninitScheduler(__func__, errcode);
 		}
 	}
 	rdbytes = readFromFile(file, getHeadDB(currentDatabase), filesize);
 	if((rdbytes-filesize))	{
-		printf("Error reading file %s\n", filename);
-		res = /*READFILE_ERROR*/;
+		printf("File reading error: %s\n", filename);
+		res = READFILE_ERROR;
 	}
 	else	{
 		puts("Database is succesfully downloaded\n");
@@ -419,9 +454,19 @@ static int loadFromFile(void)	{
 	closedb(file);
 	return res;
 }
-static int showAllWorkers(void)	{}
-static int sortData(void)	{}
-static int quit(void)		{}
+static int showAllWorkers(void)	{
+	if(!currentDatabase)	{
+		puts("No data,lol\n");
+		return NODATA;
+	}
+	displayDatabase(currentDatabase);
+	return 0;
+}
+static int sortData(void)	{return 0;}
+static int quit(void)		{
+	uninitScheduler(NULL, 0);
+	return 0xfffff;
+}
 /*********************************************************************************/
 
 /*OTHER FUNCTIONS IMPLEMETNATIONS*/
@@ -469,25 +514,21 @@ static int inputData(entry* ent)	{
 			/*chkError*/
 			if(*pattr<payperh)	{
 				if(!getnstr(bufferString, wordSize))	{
-					/*INPUT ERROR*/
 					return 1;
 				}
 				setData(ent, bufferString, *pattr);
 			}
 			else if(*pattr>=payperh)	{
-				res = getuint(bufferNumber);
+				res = getuint(&bufferNumber);
 				if(!res)	{
-					setData(ent, bufferNumber, *pattr);
+					setData(ent, &bufferNumber, *pattr);
 				}
-				else	{
-					if(res==1)	{/*INPUT ERROR*/}
-					if(res==-1)	{/*INVALID INPUT*/}
+				else	
 					break;
-				}
 			}
 		}			
 		pdialogs++;
-		pattrs++;
+		pattr++;
 	}
 	return res;
 }
@@ -496,10 +537,10 @@ static void displayEntry(entry *ptr)	{
 	unsigned long ID, pay_perh, hours, salary;
 	char *post, *name, *surname, *pathr;
 	if(ptr)	{
-		ID = *getData(ptr, id);	
-		pay_perh = *getData(ptr, payperh);
-		hours = *getData(ptr, hrs);
-		salary = *getData(ptr, pay);
+		ID = *((unsigned long*)(getData(ptr, id)));	
+		hours = *((unsigned long*)(getData(ptr, hrs)));	
+		pay_perh= *((unsigned long*)(getData(ptr, payperh)));	
+		salary= *((unsigned long*)(getData(ptr, pay)));	
 		post = getData(ptr, pos);
 		name = getData(ptr, name1);
 		surname = getData(ptr, name3);

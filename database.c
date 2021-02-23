@@ -136,10 +136,10 @@ static listEntry* find_by_string(database* db, const char* pattern)	{
 	ptr = db->headEntry;
 	lim = ptr + (db->allMem / db->occupiedMem);
 	for(;ptr<lim; ptr++)	{
-		if(	!(strncmp(pattern, db->position, WORD_SIZE) &&
-			strncmp(pattern, db->firstName, WORD_SIZE) &&
-			strncmp(pattern, db->secondName, WORD_SIZE) &&
-			strncmp(pattern, db->lastName, WORD_SIZE))
+		if(	!(strncmp(pattern, ptr->position, WORD_SIZE) &&
+			strncmp(pattern, ptr->firstName, WORD_SIZE) &&
+			strncmp(pattern, ptr->secondName, WORD_SIZE) &&
+			strncmp(pattern, ptr->lastName, WORD_SIZE))
 		  )
 		{
 			res = addList(new, ptr);
@@ -153,7 +153,7 @@ static listEntry* find_by_string(database* db, const char* pattern)	{
 listEntry* findData(database* db, void* data, attributes attr)	{	
 	/*two pieces: find by ID and find by String*/
 	return (attr>none && attr<payperh) ? find_by_string(db, (const char*)data)
-		: find_by_id(db, (unsigned long)(*data));
+		: find_by_id(db, *((unsigned long*)data));
 }
 
 int checkID(database* db, unsigned long id)	{
@@ -169,7 +169,7 @@ int checkIDexept(database* db, unsigned long exept, unsigned long id)	{
 	entry *ptr = getHeadDB(db);
 	entry *tail = getTailDB(db);
 	for(;ptr<=tail;ptr++)	{
-		if((ptr->id == id) && (ptr->id == exept))
+		if((ptr->ID == id) && (ptr->ID == exept))
 			return 1;
 	}
 	return 0;
@@ -217,7 +217,7 @@ void swapEntries(entry* ent0, entry* ent1)	{
 }
 
 void copyEntries(entry* dest, entry* src)	{
-	memmove(*dest, *src, sizeof(entry));
+	memmove(dest, src, sizeof(entry));
 }
 
 listEntry* createList(void)	{
@@ -232,13 +232,12 @@ int addList(listEntry* exist_list, entry* new)	{
 	else	{
 		*(ptr + newsize - 1) = new;
 		exist_list->list = ptr;
-		eixst_list->list_s = newsize;
+		exist_list->list_s = newsize;
 		return 0;
 	}
 }
 void removeList(listEntry* exist_list)	{
 	entry** ptr = exist_list->list;
-	unsigned long size = exist_list->list_s;
 	if(ptr)	{
 		free(ptr);
 		exist_list->list=NULL;

@@ -38,6 +38,14 @@ void printerr(const char* msg, ...)	{
 	va_end(args);
 }
 
+void funcPerror(const char* func, int errcode)	{
+	if(func)
+		printf("%s: \n", func);
+	else	
+		puts("Undefined function: ");
+	perror(strerror(errcode));
+}
+
 /*Return negative number, if no function is succesfully completed.*/
 int getChkey(void)	{
 	char input[BUFINPUTSIZE], *p = NULL;
@@ -81,9 +89,9 @@ char* initTabs(unsigned int word_size)	{
 	char* pretabs = calloc(bs, 1);
 	char* tabs = calloc(bs, 1);
 	if(pretabs)	{
-		snprintf(pretabs,bs, PRETABS, COLONSIZE, word_size, word_size, word_sizeword_size, COLONSIZE,COLONSIZE,COLONSIZE, COLONSIZE);
+		snprintf(pretabs,bs, PRETABS, COLONSIZE, word_size, word_size, word_size, word_size, COLONSIZE,COLONSIZE,COLONSIZE, COLONSIZE);
 		if(tabs)	{
-			snprintf(tabs, "ID", "Surname", "Name", "Patronymic", "Post", "h/pay", "Hours", "Salary");
+			snprintf(tabs, bs, "ID", "Surname", "Name", "Patronymic", "Post", "h/pay", "Hours", "Salary");
 		}
 		free(pretabs);
 		pretabs=NULL;
@@ -106,6 +114,7 @@ char* initUnderline(unsigned int word_size)	{
 		memset(underline, '_', bs-2);
 		underline[bs-1] = 0xa;
 	}
+	return underline;
 }
 
 char* initSelectMenu(void)	{

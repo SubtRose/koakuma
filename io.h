@@ -7,6 +7,7 @@
 /*atold() return -1, in case const char* w isn't a number.*/
 int		atold(unsigned long* , char* );
 void 		printerr(const char*, ...);
+void		funcPerror(const char*, int);
 int		getChkey(void);
 /*return 1 - yes, 0 - no, (-1) - invalid output*/
 int		yesOrNo(void);
