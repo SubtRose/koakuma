@@ -45,6 +45,7 @@ CURRENT TASKS:
 		*input_error: 	invalid number,
 				key_is_notvalid,
 				id_alreay_exists;
++ write an universal rule;
 - append a scheduler module (aside sort());
 	+ init/uninit functions;
 	+ new_entry();
