@@ -31,12 +31,13 @@ static void inverse_arr(void*, size_t, size_t);
 void bubbleSort(database* db, attributes attr)	{
 	unsigned long nitems = db->allMem / db->occupiedMem, i;
 	int sorted = 0;
+	compare cmp;
 	entry	*head 	= db->headEntry,
 		*ptr_j	= NULL,
 		*ptr_k	= NULL,
 		*ptr_lim= head + nitems;
 		;
-	compare cmp = get_fcmp(attr);
+	cmp = get_fcmp(attr);
 
 	for(i = 0; i < nitems && !sorted; i++)	{
 		sorted = 1;
@@ -54,13 +55,13 @@ void bubbleSort(database* db, attributes attr)	{
 
 void shellSort(database* db, attributes attr)	{
 	unsigned int gap, *pseq=NULL, *seq_lim = NULL;
+	compare cmp=NULL;
+	nums_seq* seq_gaps = NULL;
 	entry	*ptr_head	= db->headEntry,
 		*ptr_i		= NULL,
 		*ptr_gap	= NULL,
 		*ptr_lim	= ptr_head + db->occupiedMem;
 		;
-	compare cmp = NULL;
-	nums_seq* seq_gaps = NULL;
 
 	seq_gaps = hibbard_method((unsigned int)(db->allMem / db->occupiedMem));
 	if(!seq_gaps)

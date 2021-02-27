@@ -46,6 +46,8 @@ CURRENT TASKS:
 				key_is_notvalid,
 				id_alreay_exists;
 + write an universal rule;
+- add a C89 standard;
+- debug, just debug;
 - append a scheduler module (aside sort());
 	+ init/uninit functions;
 	+ new_entry();
@@ -79,6 +81,44 @@ VIM - Vi IMproved 8.2
 GNU gdb (GDB) 10.1;
 git version 2.30.0;
 ----------------------------
+
+DEBUG PLAN
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
++ creating a base;
+	+ create base contains a 8 entries and saving it;
++ saving/reading a file;
+	+ saving manually;
+	+ autosaving;
+	+ exit without autosaving;
+	+ exit with autosaving;
+	+ loading without saving a current base;
+	+ loading with saving ...;
+	+ loadind, add and saving;
+	+ loading a wrong data;
+- edit, remove, find a data;
+- (de)allocation a memory;
+- display a many entries;
+------------------------------------------------------------------------------
+
+ACTUAL BUGS
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+
+PATCH-LOG
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+v0.31(current, commit):
+	- fixed createDB();
+	- fixed tabs;
+	- fixed input order;
+	- append dialog at saving;
+	- debuged create, save, load;
+v0.32(not commit):
+------------------------------------------------------------------------------
+
+
 
 VIM
 ----------------------------

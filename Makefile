@@ -3,13 +3,10 @@ CC=gcc
 CMODE=release
 CUSTOMOPT=3
 
-objects= main.o scheduler.o sort.o database.o io.o fileio.o
-cflags= -Wall -Wextra
+objects= main.o sort.o database.o io.o fileio.o
+cflags= -std=c99 -Wall -Wextra
 optlevel=3
 debuglevel=0
-
-testflags= -O3 -g0
-
 
 ifeq ($(CMODE),release)
 	optlevel=3
@@ -29,9 +26,8 @@ cflags+= -O$(optlevel) -g$(debuglevel)
 all: $(PROGNAME)
 
 $(PROGNAME): $(objects)
-	(gcc 2>&1 $(objects) -o $(PROGNAME)) > clogs/linker.log
-main.o: scheduler.h scheduler.c
-scheduler.o: scheduler.h scheduler.c database.h database.c sort.h sort.c io.c io.h\
+	(gcc 2>&1 $(objects) -o $(PROGNAME)) > clog/linker.log
+main.o: main.c database.h database.c sort.h sort.c io.c io.h\
 fileio.h fileio.c
 database.o: database.h database.c
 sort.o: sort.h sort.c
@@ -39,10 +35,11 @@ io.o: io.h io.c
 fileio.o: fileio.h fileio.c		
 
 %.o: %.c
-	($(CC) -c $(cflags) 2>&1 $< -o $@) > clogs/$<.log
+	($(CC) -c $(cflags) 2>&1 $< -o $@) > clog/$<.log
 
 .PHONY: clean
 
 clean:
-	rm -f $(objects)
-	rm -rf clogs/*.log
+	rm -f $(objects) $(PROGNAME)
+	rm -rf clog/i*.log
+

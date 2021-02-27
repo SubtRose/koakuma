@@ -3,6 +3,7 @@
 #include <malloc.h>
 #include <string.h>
 #include <unistd.h>
+#define	PAGE_SIZE	sysconf(_SC_PAGESIZE)
 
 static void		set_char_data(entry*, char*, attributes);
 static void		set_uint_data(entry*, unsigned long, attributes);
@@ -20,7 +21,7 @@ entry* getTailDB(database *db)	{
 unsigned long getSizeDB(database *db)	{
 	if(!(db->occupiedMem))
 		return 0;
-	return db->allMem / db->occupiedMem;
+	return db->occupiedMem / sizeof(entry);
 }
 
 database* makeDatabase(void)	{
@@ -157,10 +158,10 @@ listEntry* findData(database* db, void* data, attributes attr)	{
 }
 
 int checkID(database* db, unsigned long id)	{
-	unsigned int n = db->occupiedMem / sizeof(entry);
+	unsigned int n = db->occupiedMem / sizeof(entry), i;
 	entry* ptr = db->headEntry;
 	int retv = 0;
-	for(unsigned int i = 0; i<n && !(retv = ((ptr+i)->ID==id)); i++);
+	for(i=0; i<n && !(retv = ((ptr+i)->ID==id)); i++);
 	ptr = NULL;
 	return retv;
 }
@@ -181,7 +182,7 @@ int enoughMem(database* db)	{
 int toomanyMem(database* db)	{
 	return (int)(((long)(db->allMem) - (long)(db->occupiedMem)) 
 			> 
-			(long)getpagesize());
+			PAGE_SIZE);
 }
 int isemptyDB(database* db)	{
 	return (int)(!(db->headEntry && db->occupiedMem));
@@ -189,10 +190,10 @@ int isemptyDB(database* db)	{
 
 int pageRealloc(database* db, int growDir)	{
 	entry* ptr = db->headEntry;
-	unsigned long page_s = getpagesize();
+	unsigned long page_s = PAGE_SIZE, new_size;
 	if((db->allMem < page_s) && (growDir < 0))
 		return 1;
-	unsigned long new_size = db->allMem + growDir * page_s;
+	new_size = db->allMem + growDir * page_s;
 	int retv;
 	ptr = (entry*)realloc(ptr, new_size);
 	if(ptr)	{

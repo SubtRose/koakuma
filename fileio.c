@@ -8,6 +8,7 @@ FILE* createdb(const char *fname)	{
 	res = fopen(fname, "rb");
 	if(res)	{
 		fclose(res);
+		res=NULL;
 	}
 	else	{
 		res = fopen(fname, "wb+");
@@ -35,9 +36,9 @@ void closedb(FILE* db)	{
 }
 
 int writeToFile(FILE* db, const void* data, size_t nbytes)	{
-	return (int)fwrite(data, nbytes, 1, db);
+	return (int)fwrite(data, 1, nbytes, db);	
 }
 
 int readFromFile(FILE* db, void* data, size_t nbytes)	{
-	return (int)fread(data, nbytes,1, db);
+	return (int)fread(data, 1,nbytes, db);
 }

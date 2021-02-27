@@ -3,22 +3,24 @@
 #include <ctype.h>
 #include <malloc.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 #define	BUFINPUTSIZE	0X800
 #define ASCIIOFS	0x30
-#define CHKEYS		"befdsrvcq"
-#define COLONSIZE	0X08
+#define CHKEYS		"nefdsrvcq"
+#define COLONSIZE	10
 #define PRETABS		"%%%ds%%%ds%%%ds%%%ds%%%ds%%%ds%%%ds%%%ds\n"
 #define	PREFORMATLIST	"%%%dd%%%ds%%%ds%%%ds%%%ds%%%dd%%%dd%%%dd\n"
 #define	SELECTMENU	"Select an action:\n\
-			N New worker.\n\
-			E Edit data.\n\
-			F Find worker.\n\
-			D Delete data.\n\
-			S Save to file.\n\
-			R Load from file.\n\
-			V Show all workers.\n\
-			C Sort data.\n"
+N New worker.\n\
+E Edit data.\n\
+F Find worker.\n\
+D Delete data.\n\
+S Save to file.\n\
+R Load from file.\n\
+V Show all workers.\n\
+C Sort data.\n\
+Q Quit\n"
 #define	DIA1		"Enter data:\n"
 #define DIA2		"id:"
 #define DIA3		"Surname:"
@@ -39,11 +41,7 @@ void printerr(const char* msg, ...)	{
 }
 
 void funcPerror(const char* func, int errcode)	{
-	if(func)
-		printf("%s: \n", func);
-	else	
-		puts("Undefined function: ");
-	perror(strerror(errcode));
+	printf("%s:\t%s\n", func, strerror(errcode));
 }
 
 /*Return negative number, if no function is succesfully completed.*/
@@ -60,17 +58,21 @@ int getChkey(void)	{
 int yesOrNo(void)	{
 	char input[BUFINPUTSIZE];
 	int res;
-	fgets(input, BUFINPUTSIZE, stdin);
-	res = tolower(input[0]);
-	if(res=='y')	return 1;
-	if(res=='n')	return 0;
-	else		return -1;
+	while(1)	{
+		fgets(input, BUFINPUTSIZE, stdin);
+		res = tolower(input[0]);	
+		if(res=='y')	return 1;
+		if(res=='n')	return 0;
+	}
 }
 
 /*Buffer must be alloted for string, buffer's size must be equaled at least 
  * word_size.*/
 char* getnstr(char* buf, size_t word_size)	{
-	return fgets(buf, word_size, stdin);
+	char* str = fgets(buf, word_size, stdin);
+	if(str)	
+		memset(str + strlen(str) - 1, 0x00, 1);
+	return str;
 }
 
 int getuint(unsigned long* num)	{
@@ -91,7 +93,7 @@ char* initTabs(unsigned int word_size)	{
 	if(pretabs)	{
 		snprintf(pretabs,bs, PRETABS, COLONSIZE, word_size, word_size, word_size, word_size, COLONSIZE,COLONSIZE,COLONSIZE, COLONSIZE);
 		if(tabs)	{
-			snprintf(tabs, bs, "ID", "Surname", "Name", "Patronymic", "Post", "h/pay", "Hours", "Salary");
+			snprintf(tabs, bs, pretabs, "ID", "Surname", "Name", "Patronymic", "Post", "h/pay", "Hours", "Salary");
 		}
 		free(pretabs);
 		pretabs=NULL;
@@ -146,16 +148,18 @@ static int verify_chkey(int ch, const char* set_keys)	{
 }
 /*atold() return -1, in case const char* w isn't a number.*/
 int atold(unsigned long* num, char* str)	{
-	int err_code, no_err;
+	int err_code, is_num;
 	unsigned long num_cp = *num;
 	char* p=NULL;
 
 	*num=0;
 	err_code=0;
-	for(p = str; *p && (no_err = isdigit(*p)); p++)	{
-		*num = *num * 10 + (*p - ASCIIOFS);	
+	is_num=1;
+	for(p = str; *p && is_num; p++)	{
+		*num = *num * 10 + (*p - ASCIIOFS);
+		is_num = isdigit(*p);
 	}
-	if(!no_err)	{
+	if(!is_num)	{
 		err_code = -1;
 		*num = num_cp;
 	}
