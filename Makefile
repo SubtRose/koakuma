@@ -1,6 +1,6 @@
 PROGNAME=kuakua
 CC=gcc
-CMODE=release
+CMODE=debug
 CUSTOMOPT=3
 
 objects= main.o sort.o database.o io.o fileio.o

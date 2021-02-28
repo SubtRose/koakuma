@@ -46,10 +46,17 @@ entry* newEntry(database* db)	{
 	return ptr;
 }
 
+void bindToDB(database *db)	{
+	entry *ptr = getHeadDB(db), *lim = getTailDB(db);
+	for(;ptr<=lim; ptr++)	{
+		ptr->DB = db;
+	}
+}
+
 entry* remEntry(entry* ent)	{
 	database* db = ent->DB;
 	unsigned long entry_s = sizeof(entry);
-	entry* tail_ent = db->headEntry + db->occupiedMem / entry_s;
+	entry* tail_ent = db->headEntry + (db->occupiedMem / entry_s) - 1;
 	swapEntries(ent, tail_ent);
 	db->occupiedMem -= entry_s;
 	db = NULL;
@@ -112,7 +119,7 @@ static listEntry* find_by_id(database* db, unsigned long id)	{
 	int res;
 
 	ptr = db->headEntry;
-	lim = ptr + (db->allMem / db->occupiedMem);
+	lim = ptr + (db->occupiedMem / sizeof(entry));
 	new = createList();
 	if(!new)
 		return NULL;
@@ -135,7 +142,7 @@ static listEntry* find_by_string(database* db, const char* pattern)	{
 	if(!new)
 		return NULL;
 	ptr = db->headEntry;
-	lim = ptr + (db->allMem / db->occupiedMem);
+	lim = ptr + (db->occupiedMem / sizeof(entry));
 	for(;ptr<lim; ptr++)	{
 		if(	!(strncmp(pattern, ptr->position, WORD_SIZE) &&
 			strncmp(pattern, ptr->firstName, WORD_SIZE) &&
@@ -170,7 +177,7 @@ int checkIDexept(database* db, unsigned long exept, unsigned long id)	{
 	entry *ptr = getHeadDB(db);
 	entry *tail = getTailDB(db);
 	for(;ptr<=tail;ptr++)	{
-		if((ptr->ID == id) && (ptr->ID == exept))
+		if((ptr->ID == id) && (ptr->ID != exept))
 			return 1;
 	}
 	return 0;
@@ -222,7 +229,7 @@ void copyEntries(entry* dest, entry* src)	{
 }
 
 listEntry* createList(void)	{
-	return (listEntry*)malloc(sizeof(listEntry));
+	return (listEntry*)calloc(1, sizeof(listEntry));
 }
 int addList(listEntry* exist_list, entry* new)	{
 	entry **ptr = exist_list->list;

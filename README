@@ -61,8 +61,11 @@ CURRENT TASKS:
 	+ errors handling;
 	- compile it;
 - write a test environment;
-- write a Makefile;
-	- read about a recipes;
+	- generator.h;
+	- timer.h;
+	- testio.h;
++ write a Makefile;
+	+ read about a recipes;
 
 - testing and debugging;
 	- define a maximal number of entries;
@@ -97,7 +100,14 @@ DEBUG PLAN
 	+ loadind, add and saving;
 	+ loading a wrong data;
 - edit, remove, find a data;
+	+ edit each attribute;
+	+ remove 3 entries from begin, middle and end;
+	+ find data;
+		+ find by ID;
+		+ find by string;
+		
 - (de)allocation a memory;
+	- create bases contains a greater 4096 and 8192 bytes correspondly;
 - display a many entries;
 ------------------------------------------------------------------------------
 
@@ -116,6 +126,8 @@ v0.31(current, commit):
 	- append dialog at saving;
 	- debuged create, save, load;
 v0.32(not commit):
+	- fixed a binding downloaded base to new base;
+	- treated a broken removing an entries;
 ------------------------------------------------------------------------------
 
 

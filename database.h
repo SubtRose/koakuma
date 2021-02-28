@@ -40,6 +40,7 @@ attributes;
 
 /*newEntry() will return a new object, if was succesfully, else will return NULL;*/
 entry*		newEntry(database*);
+void		bindToDB(database*);
 entry*		remEntry(entry*);
 void		setData(entry*, void*, attributes);
 void*		getData(entry*, attributes);

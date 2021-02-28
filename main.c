@@ -268,6 +268,7 @@ static int findWorker(void)	{
 		return NODATA;
 	}
 	/*input a data for search*/
+	puts("Enter Data to search:\t");
 	getnstr(bufferString, wordSize);
 	/*detection a type of data (string or id)*/
 	res = atold(&bufferNumber, bufferString);
@@ -317,10 +318,10 @@ static int deleteData(void)	{
 	/*search an entry what is need by ID*/
 	List = findData(currentDatabase, &ID, id);
 	/*display this entry*/
-	worker = *(List->list);
 	if(List->list_s)	{
 		puts(tabs);
 		puts(underline);
+		worker = *(List->list);
 		displayEntry(worker);
 	}
 	else	{
@@ -477,6 +478,7 @@ static int loadFromFile(void)	{
 	else	{
 		puts("Database is succesfully downloaded\n");
 		currentDatabase->occupiedMem += (unsigned long)rdbytes;
+		bindToDB(currentDatabase);
 		res=0;
 	}
 	closedb(file);
@@ -594,12 +596,12 @@ static void displayDatabase(database *db)	{
 	}
 }
 static void displayList(listEntry* le)	{
-	entry *ptr, *lim;
+	entry **ptr, **lim;
 	if(le && le->list)	{
-		ptr = *(le->list);
+		ptr = le->list;
 		lim = ptr + le->list_s;
 		for(;ptr<lim;ptr++)
-			displayEntry(ptr);
+			displayEntry(*ptr);
 	}
 }
 
