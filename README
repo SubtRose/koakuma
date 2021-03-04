@@ -19,8 +19,8 @@ CURRENT TASKS:
 + write an input/output interface;
 	+ read about output's format;
 	+ read about va_list from <stdarg.h>;
-	- read about VAL(varues array's length);
-	- need to partially rewrite;
+	+ read about VAL(varues array's length);
+	+ need to partially rewrite;
 + write a file input/output inteface;
 + make an error handling;
 	+ error's type:
@@ -46,9 +46,8 @@ CURRENT TASKS:
 				key_is_notvalid,
 				id_alreay_exists;
 + write an universal rule;
-- add a C89 standard;
-- debug, just debug;
-- append a scheduler module (aside sort());
++ add a C99 standard;
++ append a scheduler module (aside sort());
 	+ init/uninit functions;
 	+ new_entry();
 	+ edit_data();
@@ -59,18 +58,17 @@ CURRENT TASKS:
 	+ show_all();
 	+ quit();
 	+ errors handling;
-	- compile it;
+	+ compile it;
+- make incapsulation of database's objects;
+- light test a new system;
 - write a test environment;
-	- generator.h;
+	- read about time.h;
+	- read about threading;
+	+ generator.h;
 	- timer.h;
-	- testio.h;
+	+ testio.h;
 + write a Makefile;
 	+ read about a recipes;
-
-- testing and debugging;
-	- define a maximal number of entries;
-	- think over about test's order;
-	- append sort() to the scheduler module;
 
 - done;
 ----------------------------
@@ -99,20 +97,21 @@ DEBUG PLAN
 	+ loading with saving ...;
 	+ loadind, add and saving;
 	+ loading a wrong data;
-- edit, remove, find a data;
++ edit, remove, find a data;
 	+ edit each attribute;
 	+ remove 3 entries from begin, middle and end;
 	+ find data;
 		+ find by ID;
 		+ find by string;
 		
-- (de)allocation a memory;
-	- create bases contains a greater 4096 and 8192 bytes correspondly;
-- display a many entries;
++ (de)allocation a memory;
+	+ rewrite getKey() for test-mode;
+	+ create bases contains a greater 4096 and 8192 bytes correspondly;
 ------------------------------------------------------------------------------
 
 ACTUAL BUGS
 ------------------------------------------------------------------------------
+- impossible display all entries in base;
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 
@@ -125,9 +124,14 @@ v0.31(current, commit):
 	- fixed input order;
 	- append dialog at saving;
 	- debuged create, save, load;
-v0.32(not commit):
+v0.32(current, commit):
 	- fixed a binding downloaded base to new base;
 	- treated a broken removing an entries;
+v0.33(no commit):
+	- append testenv/generator.h;
+	- append a conditional compilation for testing;
+	- feature to create a randomly base;
+	- (de)allocation memory is checked;
 ------------------------------------------------------------------------------
 
 

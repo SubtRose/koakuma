@@ -8,7 +8,7 @@
 #define	BUFINPUTSIZE	0X800
 #define ASCIIOFS	0x30
 #define CHKEYS		"nefdsrvcq"
-#define COLONSIZE	10
+#define COLONSIZE	10	
 #define PRETABS		"%%%ds%%%ds%%%ds%%%ds%%%ds%%%ds%%%ds%%%ds\n"
 #define	PREFORMATLIST	"%%%dd%%%ds%%%ds%%%ds%%%ds%%%dd%%%dd%%%dd\n"
 #define	SELECTMENU	"Select an action:\n\

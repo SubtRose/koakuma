@@ -1,6 +1,7 @@
 #include "database.h"
 #include "fileio.h"
 #include "io.h"
+#include "test.h"
 
 #include <errno.h>
 #include <malloc.h>
@@ -48,6 +49,12 @@ static FILE *currentFile;
 static attributes inputOrderAttrs[DIALOGS_SIZE];
 static void initInputOrder(void);
 
+#ifdef TEST_H
+static char *testMenu;
+static int randomBase(void);
+#define GENERATE_ERROR	0x1a0
+#endif
+
 /*IMPORTED DATA*/
 /*********************************************************************************/
 size_t wordSize;
@@ -89,6 +96,8 @@ int  main(void)	{
 	int key;
 
 	initalization();
+
+#ifndef TEST_H
 	while(1)	{
 		puts(menu);
 		key = getChkey();
@@ -98,6 +107,18 @@ int  main(void)	{
 		}
 		procedures[key]();
 	}
+#else
+	while(1)	{
+		puts(menu);
+		puts(testMenu);
+		key = getTestKey();
+		if(key<0)	{
+			puts("Be more carefully\n");
+			continue;
+		}
+		procedures[key]();
+	}
+#endif
 }
 /*********************************************************************************/
 
@@ -121,6 +142,9 @@ static void initalization(void)	{
 			uninitalization(__func__, errcode, NOSAVE);
 	}
 	initInputOrder();
+#ifdef TEST_H
+	testMenu = initTestMenu();
+#endif
 }
 static void uninitalization(const char* func, int errcode, int needSave){
 	char functionName[FILENAMESIZE];
@@ -139,6 +163,10 @@ static void uninitalization(const char* func, int errcode, int needSave){
 	free(formatOutput);
 	free(underline);
 	free(tabs);
+#ifdef TEST_H
+	free(testMenu);
+	testMenu=NULL;
+#endif
 	menu=formatOutput=underline=tabs = NULL;
 	dialogs=NULL;
 	strncpy(functionName, func ? func : __func__, FILENAMESIZE);
@@ -485,7 +513,7 @@ static int loadFromFile(void)	{
 	return res;
 }
 static int showAllWorkers(void)	{
-	if(!currentDatabase)	{
+	if(!currentDatabase || isemptyDB(currentDatabase))	{
 		puts("No data,lol\n");
 		return NODATA;
 	}
@@ -505,6 +533,25 @@ static int quit(void)		{
 	uninitalization(NULL, NOERROR, saveopt);
 	return 0xfffff;
 }
+
+#ifdef TEST_H
+static int randomBase(void)	{
+	unsigned long baseSize;
+	int errcode=0;
+	if(currentDatabase)	{
+		demakeDatabase(currentDatabase);
+		currentDatabase = NULL;
+	}
+	puts("Enter a size of new base:\t");
+	getuint(&baseSize);
+	currentDatabase = generateBase(baseSize);
+	if(!currentDatabase)	{
+		puts("Failed to generate database\n");
+		errcode = GENERATE_ERROR;
+	}
+	return errcode;
+}
+#endif
 /*********************************************************************************/
 
 /*OTHER FUNCTIONS IMPLEMETNATIONS*/
@@ -519,7 +566,9 @@ static void initProcedures(void)	{
 	procedures['v']= showAllWorkers;
 	procedures['c']= sortData;
 	procedures['q']= quit;
-	return;
+#ifdef TEST_H
+	procedures['g']= randomBase;
+#endif
 }
 
 static void initInputOrder(void)	{	
