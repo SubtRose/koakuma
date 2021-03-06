@@ -46,6 +46,7 @@ test.h: $(theader)
 	$(COPY) $(theader) test.h
 testenv/generator.o: testenv/generator.h testenv/generator.c
 testenv/testio.o: testenv/testio.h testenv/testio.c
+testenv/timer.o: testenv/timer.h testenv/timer.c
 
 %.o: %.c
 	echo $(progdir)
@@ -55,7 +56,7 @@ testenv/testio.o: testenv/testio.h testenv/testio.c
 
 clean:
 	rm -rf $(objects) $(PROGNAME)
-	rm -rf clog/*.log clog/testenv/*.log
+	rm -rf clog/*.log clog/testenv/*.log testenv/testlog/*.log
 	rm -rf $(tmp)
 remtmp:
 	rm -rf $(tmp) 

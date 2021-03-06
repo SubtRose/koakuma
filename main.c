@@ -1,6 +1,7 @@
 #include "database.h"
 #include "fileio.h"
 #include "io.h"
+#include "sort.h"
 #include "test.h"
 
 #include <errno.h>
@@ -31,8 +32,10 @@
 #define	EMPTY_FILE		0x107
 #define READFILE_ERROR		0x108
 #define INVALID_FILETYPE	0x109
+#define SORT_ERROR		0x1a0
 
 typedef int (*procedure)(void);
+typedef void (*sortFunction)(database*, attributes);
 
 static procedure procedures[SCHEDPROCSIZE];
 static void initProcedures(void);
@@ -46,13 +49,14 @@ static char *tabs;
 static database *currentDatabase;
 static FILE *currentFile;
 
-static attributes inputOrderAttrs[DIALOGS_SIZE];
+static attributes inputOrderAttrs[ATTRS_NUM];
 static void initInputOrder(void);
 
 #ifdef TEST_H
 static char *testMenu;
 static int randomBase(void);
-#define GENERATE_ERROR	0x1a0
+static int testing(void);
+#define GENERATE_ERROR	0x200
 #endif
 
 /*IMPORTED DATA*/
@@ -81,12 +85,13 @@ static int quit(void);
 
 /*OTHER PROTOTYPES*/
 /*********************************************************************************/
-static int	inputData(entry*); /*1 - input error; (-1) - invalid input;*/
-static void	displayEntry(entry*);
-static void	displayDatabase(database*);
-static void	displayList(listEntry*);
+static int		inputData(entry*); /*1 - input error; (-1) - invalid input;*/
+static void		displayEntry(entry*);
+static void		displayDatabase(database*);
+static void		displayList(listEntry*);
 
-static int	wrongFileSize(unsigned long); /*return 0 is correct;*/
+static int		wrongFileSize(unsigned long); /*return 0 is correct;*/
+static attributes	attributeSelector(void);
 /*********************************************************************************/
 
 
@@ -371,6 +376,7 @@ static int deleteData(void)	{
 	removeList(List);
 	return 0;
 }
+
 static int saveToFile(void)	{
 	char filename[FILENAMESIZE];
 	FILE *file;
@@ -512,6 +518,7 @@ static int loadFromFile(void)	{
 	closedb(file);
 	return res;
 }
+
 static int showAllWorkers(void)	{
 	if(!currentDatabase || isemptyDB(currentDatabase))	{
 		puts("No data,lol\n");
@@ -522,7 +529,39 @@ static int showAllWorkers(void)	{
 	displayDatabase(currentDatabase);
 	return 0;
 }
-static int sortData(void)	{return 0;}
+
+static int sortData(void)	{
+#ifdef TEST_H
+	const char sortKeySet[] = "bsq";
+	const sortFunction setFunctions[] = 
+		{bubbleSort, shellSort, quickSort};
+	const unsigned long inputSize = 0x40;
+	sortFunction psort;
+	char input[inputSize];
+	int key;
+	void *res;
+	attributes attr;
+
+	if(!currentDatabase || isemptyDB(currentDatabase))	{
+		puts("No data, lol\n");
+		return NODATA;
+	}
+
+	puts("Select sort:\t");
+	fgets(input, inputSize, stdin);
+	key = input[0];
+	res = strchr(sortKeySet, key);
+	if(!res)	{
+		puts("Invalid Key\n");
+		return INVALID_INPUT;
+	}
+	psort = setFunctions[((char*)res - sortKeySet) / sizeof(char*)];
+	attr = attributeSelector();
+	psort(currentDatabase, attr);
+#endif
+	return 0;
+}
+
 static int quit(void)		{
 	int saveopt = NOSAVE, res;
 	if(currentDatabase)	{
@@ -551,6 +590,76 @@ static int randomBase(void)	{
 	}
 	return errcode;
 }
+
+static int testing(void)	{
+	/* CREATE A FP-ARRAY WITH SIZE IS EQULED TRY_MAX */
+	/* FETCHING A SORTING-FUNCTION */
+	/* CALL INIT_TEST() */
+	/* SET A BASE SIZE (BASE SIZE *= KSTEP) (LABEL_1)*/
+		/* FOR I=0 TO TRYN_MAX: */ /*(LABEL_0)*/
+			/* GENERATE BASE WITH SIZE IS EQULED A BASE SIZE */
+			/* T0 = TIME() */
+			/* SORTING A BASE */
+			/* T1 = TIME() */
+			/* REMOVE AN ACTUAL BASE */
+			/* COMPUTING RATE (BASE SIZE DIVIDE BY DELTA TIME) */
+			/* REGISTRATION RATE TO FP-ARRAY */
+			/* INCOME "I" AND GOTO LABEL_0 */
+		/* REGISTRATION A FP-ARRAY TO RESULT-TEST */
+		/* GOTO LABEL_1 */
+	/********************************************************************/
+	
+	const void *fetchSort[] = {	bubbleSort, 
+					shellSort, 
+					quickSort, 
+					0x00,
+					"Bubble", 
+					"Shell", 
+					"Quick", 
+					0x00
+				};
+	const attributes keyAttribute = name2;
+	unsigned int i,j, n, baseSize, step, limit; 
+	double *buffer;
+	resultTest* result[3];
+	time_t timer[2];
+
+	if(currentDatabase)	{
+		demakeDatabase(currentDatabase);
+		currentDatabase=NULL;
+	}
+
+	n = NUMBER_TRIES;
+       	buffer = (double*)malloc(n*sizeof(double));
+	step = TEST_STEP;
+	limit = TEST_LIMIT;
+
+	for(i=0; fetchSort[i]; i++)	{
+		result[i] = initTest((char*)(fetchSort[i+4]));
+		for(baseSize=1; baseSize<limit; baseSize *= step)	{
+			for(j=0; j<n;j++)	{
+				currentDatabase = generateBase((unsigned long)baseSize);	
+				timer[0] = time(NULL);
+				((sortFunction)(fetchSort[i]))(currentDatabase, keyAttribute);
+				timer[1] = time(NULL);
+				demakeDatabase(currentDatabase);
+				currentDatabase=NULL;
+				buffer[j] = baseSize / (difftime(timer[1], timer[0]));								
+			}
+			addRate(result[i], baseSize, buffer, n);
+		}
+	}
+
+	n=3;
+	for(i=0; i<n;i++)	{
+		printResult(result[i]);
+		removeResult(result[i]);
+		result[i]=0;
+	}
+
+	free(buffer);
+	return 0;
+}
 #endif
 /*********************************************************************************/
 
@@ -568,6 +677,7 @@ static void initProcedures(void)	{
 	procedures['q']= quit;
 #ifdef TEST_H
 	procedures['g']= randomBase;
+	procedures['t']= testing;
 #endif
 }
 
@@ -580,6 +690,7 @@ static void initInputOrder(void)	{
 	inputOrderAttrs[5]=pos;
 	inputOrderAttrs[6]=payperh;
 	inputOrderAttrs[7]=hrs;
+	inputOrderAttrs[8]=pay;
 }
 
 static int inputData(entry* ent)	{
@@ -656,5 +767,19 @@ static void displayList(listEntry* le)	{
 
 static int wrongFileSize(unsigned long fsize)	{
 	return fsize % sizeof(entry);
+}
+
+static attributes attributeSelector(void)	{
+	int res;
+	unsigned long key;
+
+	puts("Select a key-attribute to sorting\n");
+	puts("1 ID\n2 Surname\n3 Name\n4 Patronymic\n5 Position\n6 Pay/h\n7 Hours\n8 Salary:\t");
+	res = getuint(&key);
+	if(res<0 || !(key>0 && key<9))	{
+		puts("Invalid input\n");
+		return none;
+	}
+	return inputOrderAttrs[key];
 }
 /*********************************************************************************/

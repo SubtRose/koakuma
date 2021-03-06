@@ -1,6 +1,7 @@
 #ifndef DATABASE_H
 #define DATABASE_H
-#define WORD_SIZE	0X20
+#define WORD_SIZE	0x20
+#define ATTRS_NUM	9
 
 typedef struct _entry {
 	void*		DB;

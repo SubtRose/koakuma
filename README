@@ -23,28 +23,6 @@ CURRENT TASKS:
 	+ need to partially rewrite;
 + write a file input/output inteface;
 + make an error handling;
-	+ error's type:
-		* allocation memory/file-work, crucial errors(TYPE1);
-		reaction(call to uninitScheduler(int err_code)):
-			1. save a current database;
-			2. close all file descriptors;
-			3. uninitalization all static objects;
-			4. print(strerror(errno));
-			5. call exit(errno);
-		* allocatiom memory/file-work/input-errors, non-crucial errors;
-		reaction(TYPE2):
-			1. print(strerror(errno));
-			2. errno=0;
-			3. return control to caller;
-		* user's error, a like input's error(TYPE3);
-		reaction:
-			1. set input's error;
-			2. print(input's error);
-			3. try again;
-
-		*input_error: 	invalid number,
-				key_is_notvalid,
-				id_alreay_exists;
 + write an universal rule;
 + add a C99 standard;
 + append a scheduler module (aside sort());
@@ -59,17 +37,20 @@ CURRENT TASKS:
 	+ quit();
 	+ errors handling;
 	+ compile it;
-- make incapsulation of database's objects;
-- light test a new system;
-- write a test environment;
-	- read about time.h;
-	- read about threading;
++ write a test environment;
 	+ generator.h;
-	- timer.h;
 	+ testio.h;
 + write a Makefile;
 	+ read about a recipes;
++ debug sort;
+	+ write a temporary module with selector to debug sort functions;
+	+ look sort work on 100-entries(near) base;
 
+- testing sort;
+	+ define format of output test;
+	+ write function output to testlog-file;
+	- make a test function into client;
+	- testing :) ;
 - done;
 ----------------------------
 
@@ -82,56 +63,37 @@ VIM - Vi IMproved 8.2
 GNU gdb (GDB) 10.1;
 git version 2.30.0;
 ----------------------------
-
-DEBUG PLAN
-------------------------------------------------------------------------------
-------------------------------------------------------------------------------
-+ creating a base;
-	+ create base contains a 8 entries and saving it;
-+ saving/reading a file;
-	+ saving manually;
-	+ autosaving;
-	+ exit without autosaving;
-	+ exit with autosaving;
-	+ loading without saving a current base;
-	+ loading with saving ...;
-	+ loadind, add and saving;
-	+ loading a wrong data;
-+ edit, remove, find a data;
-	+ edit each attribute;
-	+ remove 3 entries from begin, middle and end;
-	+ find data;
-		+ find by ID;
-		+ find by string;
-		
-+ (de)allocation a memory;
-	+ rewrite getKey() for test-mode;
-	+ create bases contains a greater 4096 and 8192 bytes correspondly;
-------------------------------------------------------------------------------
+--
 
 ACTUAL BUGS
 ------------------------------------------------------------------------------
 - impossible display all entries in base;
+- changing WORD_SIZE from database.h, leads to disaster;
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 
 PATCH-LOG
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
-v0.31(current, commit):
+v0.31(commited):
 	- fixed createDB();
 	- fixed tabs;
 	- fixed input order;
 	- append dialog at saving;
 	- debuged create, save, load;
-v0.32(current, commit):
+v0.32(commited):
 	- fixed a binding downloaded base to new base;
 	- treated a broken removing an entries;
-v0.33(no commit):
+v0.33(commited):
 	- append testenv/generator.h;
 	- append a conditional compilation for testing;
 	- feature to create a randomly base;
 	- (de)allocation memory is checked;
+v0.34(current, commited):
+	- append temporary sorting-function;
+	- rewtitten a shellSorting function;
+	- append testing function to client;
+v0.35(no commit):
 ------------------------------------------------------------------------------
 
 
