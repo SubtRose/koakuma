@@ -1,7 +1,7 @@
 PROGNAME=kuakua
 CC=gcc
-CMODE=test
-CUSTOMOPT=0
+CMODE=release
+OPT=0
 COPY=cp
 
 objects= main.o sort.o database.o io.o fileio.o
@@ -22,12 +22,13 @@ ifeq ($(CMODE),debug)
 	debuglevel=3	
 endif
 ifeq ($(CMODE),test)
-	optlevel=$(CUSTOMOPT)
+	optlevel=$(OPT)
 	debuglevel=3
 	objects+= $(tobjects)
 	theader:= testenv/test.h
 endif
 cflags= -std=c99 -Wall -Wextra -O$(optlevel) -g$(debuglevel)
+tmp += $(objects)
 
 #####################################################################################################################################################################
 
@@ -56,7 +57,7 @@ testenv/timer.o: testenv/timer.h testenv/timer.c
 
 clean:
 	rm -rf $(objects) $(PROGNAME)
-	rm -rf clog/*.log clog/testenv/*.log testenv/testlog/*.log
+	rm -rf clog/*.log clog/testenv/*.log testenv/testlog/*
 	rm -rf $(tmp)
 remtmp:
 	rm -rf $(tmp) 

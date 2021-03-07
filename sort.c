@@ -46,14 +46,23 @@ void bubbleSort(database* db, attributes attr)	{
 	return;
 }
 
+static unsigned long upower(unsigned long num, unsigned long pow)	{
+	if(!pow)
+		return 1;
+	for(unsigned long i=1; i<pow; i++)	
+		num *= num;
+	return num;
+}
+
 static unsigned long* hibbardMethod(unsigned long n)	{
 	unsigned long *resr, *res, s, d, ulong_s, i, j;	
 
 	i=0;
 	s=0;
 	ulong_s = sizeof(unsigned long);
+	resr=NULL;
 	while(1)	{
-		d = (2^i) - 1;
+		d = upower(2, i) - 1;
 		if(d<n)	{
 			++s;
 			resr = (unsigned long*)realloc(resr, s * ulong_s);
@@ -81,37 +90,37 @@ void shellSort(database* db, attributes attr)	{
 	/*GET A NUMBER OF ENTRIES IN BASE*/
 	/*SET A SEQUENSE OF GAPS BY HIBBARD-METHOD*/
 	/*FETCH A COMPARE-FUNCTION BY ATTR(CMP=)*/
-	/*FOR GAPS[0] TO WHEN GAPS[I]==0: */
-		/*FOR BASE[O] TO BASE[(J+GAPS[I])>=NUMBER OF ENTRIES]*/
-			/*CMP(BASE[J], BASE[J+GAPS[I]])*/
-				/*IF CMP(..)>1 THEN SWAP(BASE[J], BASE[J+GAPS[I]])*/
+	/*FOREACH(GAP):	*/
+		/*FOR(I=0; I<N; I++):	*/
+			/*FOR(J=I+GAP; J<N; J += GAP):	*/
+				/*CMP(BASE[I], BASE[J])*/
+				/* IF CMP(..)>0 THEN SWAP(BASE[I], BASE[J])*/
 	/**************************************************************************/
 
-	unsigned long sizeDB, *seqGap, *pseq;
+	unsigned long N, *gaps, *pgaps, gap;
 	compare cmp;
-	entry *head, *ptr, *target, *lim;
+	entry *ptrI, *ptrJ, *head, *lim;
 	int res;
 
-	sizeDB = db->occupiedMem / sizeof(entry);
-	seqGap = hibbardMethod(sizeDB);
+	N = getSizeDB(db);
+	gaps = hibbardMethod(N);
 	cmp = get_fcmp(attr);
 
 	head = getHeadDB(db);
-	lim = head + sizeDB;
-	for(pseq = seqGap; *pseq; pseq++)	{
-		ptr = head;
-		target = head + *pseq;
-		while(target<lim)	{
-			res = cmp(ptr, target);
-			if(res>0)	{
-				swapEntries(ptr, target);
+	lim = getTailDB(db) + 1;
+	for(pgaps = gaps; *pgaps; pgaps++)	{
+		gap = *pgaps;
+		for(ptrI = head; ptrI<lim; ptrI++)	{
+			for(ptrJ = ptrI + gap; ptrJ<lim; ptrJ += gap)	{
+				res = cmp(ptrI, ptrJ);
+				if(res>0)	{
+					swapEntries(ptrI, ptrJ);
+				}
 			}
-			ptr++;
-			target++;	
 		}
 	}
 
-	free(seqGap);
+	free(gaps);
 }
 
 

@@ -5,6 +5,7 @@
 #define MENU	"g Generate new base\nt Launch test\n"
 #define KEYSET	"nefdsrvcqgt"
 #define BUFSIZE	0x100
+#define LOGNAME "testenv/testlog/result.log"
 
 char* initTestMenu(void)	{
 	size_t size = strlen(MENU)+1;
@@ -22,7 +23,7 @@ int getTestKey(void)	{
 }
 
  
-resultTest	*initTest(const char *sort)	{
+resultTest *initTest(const char *sort)	{
 	resultTest *new;
 	unsigned long sizeName = NAMEFUNC_MAX;
 
@@ -34,16 +35,16 @@ resultTest	*initTest(const char *sort)	{
 	return new;
 }
 
-static double get_aver_rate(rateInfo* p)	{
+static clock_t get_aver_rate(rateInfo* p)	{
 	unsigned int n = p->tryN;
-	double *dp = p->listRates, *max = dp + n, res;
+	clock_t *dp = p->listRates, *max = dp + n, res;
 	for(res=0; dp<max; dp++)	{
 		res += *dp;
 	}
 	return (res/n);
 }
 
-void	addRate(resultTest* target, unsigned int sizeDB, double *newrate, unsigned int ntry)	{
+void	addRate(resultTest* target, unsigned int sizeDB, clock_t *newrate, unsigned int ntry)	{
 	rateInfo *dp;
 	unsigned int listsize;
 
@@ -56,22 +57,26 @@ void	addRate(resultTest* target, unsigned int sizeDB, double *newrate, unsigned 
 	dp = &((target->listTest)[listsize-1]);
 	dp->sizeBase = sizeDB;
 	dp->tryN = ntry;
-	memmove(dp->listRates, newrate, NUMBER_TRIES);
+	memmove(dp->listRates, newrate, NUMBER_TRIES * sizeof(clock_t));
 	dp->averageRate = get_aver_rate(dp);
 }
 
 void	printResult(resultTest *target)	{
 	unsigned int i, iMax;
 	rateInfo* crt;
+	FILE* log;
 
 	i=0;
 	iMax = target->listTestSize;
-	printf("%s\t", target->sortingFunc);
+	log = fopen(LOGNAME,"a+");
+	fprintf(log, "%s:\n", target->sortingFunc);
 	for(; i<iMax; i++)	{
 		crt = &(target->listTest)[i];
-		printf("%f (%u)\t", crt->averageRate, crt->sizeBase);
+		fprintf(log, "%Lf (size = %u);\n", (long double)(crt->averageRate), crt->sizeBase);
 	}
-	printf("\n");
+	
+	fprintf(log,"\n");
+	fclose(log);
 }
 
 void	removeResult(resultTest *target)	{

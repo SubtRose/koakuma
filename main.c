@@ -4,6 +4,7 @@
 #include "sort.h"
 #include "test.h"
 
+#include <ctype.h>
 #include <errno.h>
 #include <malloc.h>
 #include <stddef.h>
@@ -550,14 +551,26 @@ static int sortData(void)	{
 	puts("Select sort:\t");
 	fgets(input, inputSize, stdin);
 	key = input[0];
-	res = strchr(sortKeySet, key);
+	res = strchr(sortKeySet, tolower(key));
 	if(!res)	{
 		puts("Invalid Key\n");
 		return INVALID_INPUT;
 	}
-	psort = setFunctions[((char*)res - sortKeySet) / sizeof(char*)];
+	psort = setFunctions[(char*)res - sortKeySet];
 	attr = attributeSelector();
 	psort(currentDatabase, attr);
+#else	
+	attributes attr;
+
+	if(!currentDatabase || currentDatabase->occupiedMem<2)	{
+		puts("No data, lol\n");
+		return NODATA;
+	}
+	
+	attr = attributeSelector();
+	if(attr!=none)	
+		quickSort(currentDatabase, attr);
+	puts("Ready\n");
 #endif
 	return 0;
 }
@@ -592,22 +605,6 @@ static int randomBase(void)	{
 }
 
 static int testing(void)	{
-	/* CREATE A FP-ARRAY WITH SIZE IS EQULED TRY_MAX */
-	/* FETCHING A SORTING-FUNCTION */
-	/* CALL INIT_TEST() */
-	/* SET A BASE SIZE (BASE SIZE *= KSTEP) (LABEL_1)*/
-		/* FOR I=0 TO TRYN_MAX: */ /*(LABEL_0)*/
-			/* GENERATE BASE WITH SIZE IS EQULED A BASE SIZE */
-			/* T0 = TIME() */
-			/* SORTING A BASE */
-			/* T1 = TIME() */
-			/* REMOVE AN ACTUAL BASE */
-			/* COMPUTING RATE (BASE SIZE DIVIDE BY DELTA TIME) */
-			/* REGISTRATION RATE TO FP-ARRAY */
-			/* INCOME "I" AND GOTO LABEL_0 */
-		/* REGISTRATION A FP-ARRAY TO RESULT-TEST */
-		/* GOTO LABEL_1 */
-	/********************************************************************/
 	
 	const void *fetchSort[] = {	bubbleSort, 
 					shellSort, 
@@ -619,10 +616,11 @@ static int testing(void)	{
 					0x00
 				};
 	const attributes keyAttribute = name2;
-	unsigned int i,j, n, baseSize, step, limit; 
-	double *buffer;
+	unsigned long i,j, n, baseSize, step, limit; 
+	int res;
+	clock_t *buffer;
 	resultTest* result[3];
-	time_t timer[2];
+	clock_t timer[2], dtimer;
 
 	if(currentDatabase)	{
 		demakeDatabase(currentDatabase);
@@ -630,21 +628,33 @@ static int testing(void)	{
 	}
 
 	n = NUMBER_TRIES;
-       	buffer = (double*)malloc(n*sizeof(double));
-	step = TEST_STEP;
-	limit = TEST_LIMIT;
+       	buffer = (clock_t*)malloc(n*sizeof(clock_t));
+	printf("Limit test(default = %u):\t", TEST_LIMIT);
+	res = getuint(&limit);
+	if(res)	
+		limit = TEST_LIMIT;
+	printf("Step test(defult = %u):\t", TEST_STEP);
+	res = getuint(&step);
+	if(res)
+		step = TEST_STEP;
 
 	for(i=0; fetchSort[i]; i++)	{
 		result[i] = initTest((char*)(fetchSort[i+4]));
+		printf("Initalization test for %s-sorting\n", (char*)(fetchSort[i+4]));
 		for(baseSize=1; baseSize<limit; baseSize *= step)	{
 			for(j=0; j<n;j++)	{
-				currentDatabase = generateBase((unsigned long)baseSize);	
-				timer[0] = time(NULL);
+				printf("Generating a base, size of base = %lu\n", baseSize);
+				currentDatabase = generateBase((unsigned long)baseSize);
+				timer[0] = clock();
+				printf("Sorting(%s)..\n", (char*)(fetchSort[i+4]));
 				((sortFunction)(fetchSort[i]))(currentDatabase, keyAttribute);
-				timer[1] = time(NULL);
+				timer[1] = clock();
 				demakeDatabase(currentDatabase);
 				currentDatabase=NULL;
-				buffer[j] = baseSize / (difftime(timer[1], timer[0]));								
+				dtimer = timer[1] - timer[0];			
+				buffer[j] = dtimer;
+				printf("Sorting is finished, clock:\t%Lf\n", (long double)buffer[j]);
+				puts(underline);
 			}
 			addRate(result[i], baseSize, buffer, n);
 		}
