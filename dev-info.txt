@@ -74,6 +74,7 @@ ACTUAL BUGS
 ------------------------------------------------------------------------------
 - impossible display all entries in base;
 - changing WORD_SIZE from database.h, leads to disaster;
+- no create directory clog(for compile-logging);
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 
